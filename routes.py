@@ -1,19 +1,49 @@
 import os
 
 from fastapi import FastAPI, APIRouter, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend.config import get_settings
+from backend.db import create_all_tables
+from backend.routes_auth import router as auth_router
+from backend.routes_customers import router as customers_router
+from backend.routes_services import router as services_router
+from backend.routes_bookings import router as bookings_router
+from backend.routes_jobs import router as jobs_router
+
 
 def create_app(static_dir: str) -> FastAPI:
+    settings = get_settings()
+
+    # Create database tables
+    create_all_tables()
+
     api = APIRouter()
 
     @api.get("/health")
     def health():
-        return {"ok": True}
+        return {"ok": True, "version": settings.APP_VERSION}
 
-    app = FastAPI()
+    app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
+
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Include routers
     app.include_router(api, prefix="/api")
+    app.include_router(auth_router, prefix="/api")
+    app.include_router(customers_router, prefix="/api")
+    app.include_router(services_router, prefix="/api")
+    app.include_router(bookings_router, prefix="/api")
+    app.include_router(jobs_router, prefix="/api")
 
     if os.path.isdir(static_dir):
         assets_dir = os.path.join(static_dir, "assets")
