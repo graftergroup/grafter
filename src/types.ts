@@ -1,6 +1,7 @@
 import type { UUID } from "crypto";
 
 export type ApiStatus = "checking" | "connected" | "error";
+export type UserRole = "super_admin" | "admin" | "franchise_manager" | "technician" | "office_staff" | "customer";
 
 export interface HealthResponse {
   ok: boolean;
@@ -14,8 +15,9 @@ export interface User {
   first_name: string;
   last_name: string;
   phone?: string;
-  role: "admin" | "franchise_manager" | "technician" | "customer";
+  role: UserRole;
   franchise_id: UUID;
+  staff_type?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
