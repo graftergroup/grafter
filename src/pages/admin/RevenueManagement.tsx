@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useApi } from "@/hooks/useApi";
 import type { Invoice, Payment } from "@/types";
@@ -14,12 +14,20 @@ import {
 } from "@/components/ui/table";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SearchFilter } from "@/components/admin/SearchFilter";
+import { Pagination } from "@/components/admin/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export function RevenueManagement() {
   const { call } = useApi();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [invoiceSearch, setInvoiceSearch] = useState("");
+  const [paymentSearch, setPaymentSearch] = useState("");
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,6 +49,34 @@ export function RevenueManagement() {
 
     loadData();
   }, [call]);
+
+  // Filter and paginate invoices
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter(
+      (inv) =>
+        inv.invoice_number.toLowerCase().includes(invoiceSearch.toLowerCase()) ||
+        inv.customer_id.toString().includes(invoiceSearch.toLowerCase())
+    );
+  }, [invoices, invoiceSearch]);
+
+  const invoiceTotalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
+  const paginatedInvoices = filteredInvoices.slice(
+    (invoicePage - 1) * ITEMS_PER_PAGE,
+    invoicePage * ITEMS_PER_PAGE
+  );
+
+  // Filter and paginate payments
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) =>
+      p.invoice_id.toString().includes(paymentSearch.toLowerCase())
+    );
+  }, [payments, paymentSearch]);
+
+  const paymentTotalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const paginatedPayments = filteredPayments.slice(
+    (paymentPage - 1) * ITEMS_PER_PAGE,
+    paymentPage * ITEMS_PER_PAGE
+  );
 
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
   const paidAmount = payments
@@ -102,57 +138,78 @@ export function RevenueManagement() {
           </Button>
         </CardHeader>
         <CardContent>
-          {invoices.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No invoices yet</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Tax</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-mono text-sm">
-                        {invoice.invoice_number}
-                      </TableCell>
-                      <TableCell>{invoice.customer_id}</TableCell>
-                      <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                      <TableCell>${invoice.tax.toFixed(2)}</TableCell>
-                      <TableCell className="font-bold">${invoice.total.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {invoice.due_date
-                          ? new Date(invoice.due_date).toLocaleDateString()
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">pending</Badge>
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <div className="mb-4">
+            <SearchFilter
+              placeholder="Search by invoice number or customer..."
+              value={invoiceSearch}
+              onChange={setInvoiceSearch}
+              onClear={() => setInvoiceSearch("")}
+            />
+          </div>
+
+          {paginatedInvoices.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {invoices.length === 0 ? "No invoices yet" : "No matching invoices found"}
             </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Tax</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-mono text-sm">
+                          {invoice.invoice_number}
+                        </TableCell>
+                        <TableCell>{String(invoice.customer_id).slice(0, 8)}</TableCell>
+                        <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+                        <TableCell>${invoice.tax.toFixed(2)}</TableCell>
+                        <TableCell className="font-bold">${invoice.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {invoice.due_date
+                            ? new Date(invoice.due_date).toLocaleDateString()
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">pending</Badge>
+                        </TableCell>
+                        <TableCell className="space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {invoiceTotalPages > 1 && (
+                <Pagination
+                  currentPage={invoicePage}
+                  totalPages={invoiceTotalPages}
+                  onPageChange={setInvoicePage}
+                  isLoading={isLoading}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -164,51 +221,72 @@ export function RevenueManagement() {
           <CardDescription>Payment history</CardDescription>
         </CardHeader>
         <CardContent>
-          {payments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No payments recorded</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-sm">
-                        {String(payment.invoice_id).slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="font-bold">${payment.amount.toFixed(2)}</TableCell>
-                      <TableCell>{payment.payment_method || "—"}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            payment.status === "completed" ? "default" : "secondary"
-                          }
-                        >
-                          {payment.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(payment.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <div className="mb-4">
+            <SearchFilter
+              placeholder="Search by invoice ID..."
+              value={paymentSearch}
+              onChange={setPaymentSearch}
+              onClear={() => setPaymentSearch("")}
+            />
+          </div>
+
+          {paginatedPayments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {payments.length === 0 ? "No payments recorded" : "No matching payments found"}
             </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPayments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell className="font-mono text-sm">
+                          {String(payment.invoice_id).slice(0, 8)}
+                        </TableCell>
+                        <TableCell className="font-bold">${payment.amount.toFixed(2)}</TableCell>
+                        <TableCell>{payment.payment_method || "—"}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              payment.status === "completed" ? "default" : "secondary"
+                            }
+                          >
+                            {payment.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(payment.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {paymentTotalPages > 1 && (
+                <Pagination
+                  currentPage={paymentPage}
+                  totalPages={paymentTotalPages}
+                  onPageChange={setPaymentPage}
+                  isLoading={isLoading}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>

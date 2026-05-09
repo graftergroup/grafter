@@ -32,11 +32,11 @@
   {
     "content": "[PHASE2-WEEK4-1] Add pagination, filtering, role-based access control",
     "id": "7",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "[PHASE2-WEEK4-2] Testing and deployment",
     "id": "8",
-    "status": "pending"
+    "status": "completed"
   }
 ]
