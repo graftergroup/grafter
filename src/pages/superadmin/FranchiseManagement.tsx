@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
-import { FranchiseCard, FranchiseCardData } from "@/components/FranchiseCard";
+import { FranchiseCard } from "@/components/FranchiseCard";
+import type { FranchiseCardData } from "@/components/FranchiseCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

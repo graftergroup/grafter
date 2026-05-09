@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { StaffForm, StaffFormData } from "@/components/StaffForm";
+import { StaffForm } from "@/components/StaffForm";
+import type { StaffFormData } from "@/components/StaffForm";
 import {
   Table,
   TableBody,
@@ -113,23 +114,16 @@ export function StaffManagement() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Staff Management">
         <div className="flex items-center justify-center h-96">Loading...</div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Staff Management" description="Manage your franchise staff members">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Staff Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your franchise staff members
-            </p>
-          </div>
-
+        <div className="flex justify-end">
           <StaffForm
             onSubmit={handleCreateStaff}
             isSuperadmin={false}

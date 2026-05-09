@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { SuperadminSidebar } from "./SuperadminSidebar";
 
 export function SuperadminLayout({ children }: { children: ReactNode }) {

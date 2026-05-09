@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
-import { StaffForm, StaffFormData } from "@/components/StaffForm";
+import { StaffForm } from "@/components/StaffForm";
+import type { StaffFormData } from "@/components/StaffForm";
 import {
   Table,
   TableBody,
