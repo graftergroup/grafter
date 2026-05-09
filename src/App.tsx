@@ -4,6 +4,10 @@ import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { RevenueManagement } from "@/pages/admin/RevenueManagement";
+import { TeamManagement } from "@/pages/admin/TeamManagement";
+import { CustomersBookings } from "@/pages/admin/CustomersBookings";
+import { VehicleFleet } from "@/pages/admin/VehicleFleet";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,11 +59,76 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Admin Routes */}
       <Route
         path="/admin"
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
             <AdminDashboard />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/invoices"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <RevenueManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/revenue-reports"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <RevenueManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/payments"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <RevenueManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/technicians"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <TeamManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/workload"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <TeamManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <CustomersBookings />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/bookings"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <CustomersBookings />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/vehicles"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <VehicleFleet />
           </RoleProtectedRoute>
         }
       />

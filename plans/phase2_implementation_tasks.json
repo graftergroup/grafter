@@ -7,7 +7,7 @@
   {
     "content": "[PHASE2-WEEK1-2] Create admin management routes (team, settings, franchises)",
     "id": "2",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[PHASE2-WEEK1-3] Create invoice/payment routes",
@@ -17,22 +17,22 @@
   {
     "content": "[PHASE2-WEEK2-1] Create AdminLayout, Sidebar, TopBar components",
     "id": "4",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "[PHASE2-WEEK2-2] Create AdminDashboard page with metric cards and charts",
     "id": "5",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[PHASE2-WEEK3-1] Create RevenueManagement, TeamManagement, CustomersBookings pages",
     "id": "6",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[PHASE2-WEEK4-1] Add pagination, filtering, role-based access control",
     "id": "7",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "[PHASE2-WEEK4-2] Testing and deployment",
