@@ -12,10 +12,13 @@ load_dotenv()
 class Settings:
     """Application settings loaded from environment variables."""
 
-    # Database
+    # Database - Use Neon connector
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://user:password@localhost:5432/grafter_services",
+        "DB8912C3F9_DATABASE_URL",
+        os.getenv(
+            "DATABASE_URL",
+            "postgresql://user:password@localhost:5432/grafter_services",
+        ),
     )
 
     # JWT Configuration

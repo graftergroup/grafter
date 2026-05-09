@@ -12,6 +12,10 @@ from backend.routes_customers import router as customers_router
 from backend.routes_services import router as services_router
 from backend.routes_bookings import router as bookings_router
 from backend.routes_jobs import router as jobs_router
+from backend.routes_invoices import router as invoices_router
+from backend.routes_payments import router as payments_router
+from backend.routes_vehicles import router as vehicles_router
+from backend.routes_analytics import router as analytics_router
 
 
 def create_app(static_dir: str) -> FastAPI:
@@ -44,6 +48,10 @@ def create_app(static_dir: str) -> FastAPI:
     app.include_router(services_router, prefix="/api")
     app.include_router(bookings_router, prefix="/api")
     app.include_router(jobs_router, prefix="/api")
+    app.include_router(invoices_router, prefix="/api")
+    app.include_router(payments_router, prefix="/api")
+    app.include_router(vehicles_router, prefix="/api")
+    app.include_router(analytics_router, prefix="/api")
 
     if os.path.isdir(static_dir):
         assets_dir = os.path.join(static_dir, "assets")

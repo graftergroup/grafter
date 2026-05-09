@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -12,6 +14,30 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+function RoleProtectedRoute({
+  children,
+  allowedRoles,
+}: {
+  children: React.ReactNode;
+  allowedRoles: UserRole[];
+}) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 }
 
 function AppRoutes() {
@@ -27,6 +53,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardPage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <AdminDashboard />
+          </RoleProtectedRoute>
         }
       />
       <Route path="/" element={<Navigate to="/dashboard" />} />

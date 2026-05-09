@@ -1,0 +1,42 @@
+[
+  {
+    "content": "[PHASE2-WEEK1-1] Create analytics routes for dashboard metrics (revenue, customers, jobs)",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "[PHASE2-WEEK1-2] Create admin management routes (team, settings, franchises)",
+    "id": "2",
+    "status": "pending"
+  },
+  {
+    "content": "[PHASE2-WEEK1-3] Create invoice/payment routes",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "[PHASE2-WEEK2-1] Create AdminLayout, Sidebar, TopBar components",
+    "id": "4",
+    "status": "in_progress"
+  },
+  {
+    "content": "[PHASE2-WEEK2-2] Create AdminDashboard page with metric cards and charts",
+    "id": "5",
+    "status": "pending"
+  },
+  {
+    "content": "[PHASE2-WEEK3-1] Create RevenueManagement, TeamManagement, CustomersBookings pages",
+    "id": "6",
+    "status": "pending"
+  },
+  {
+    "content": "[PHASE2-WEEK4-1] Add pagination, filtering, role-based access control",
+    "id": "7",
+    "status": "pending"
+  },
+  {
+    "content": "[PHASE2-WEEK4-2] Testing and deployment",
+    "id": "8",
+    "status": "pending"
+  }
+]
