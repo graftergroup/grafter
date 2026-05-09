@@ -23,7 +23,15 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+      const role = storedUser?.role;
+      if (role === "super_admin") {
+        navigate("/superadmin");
+      } else if (role === "franchise_manager" || role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

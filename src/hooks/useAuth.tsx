@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setAccessToken = (token: string) => {
     setAccessTokenState(token);
     localStorage.setItem("accessToken", token);
+    localStorage.setItem("access_token", token); // alias for compatibility
   };
 
   const login = async (email: string, password: string) => {
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccessToken(data.access_token);
       setUser(data.user);
       localStorage.setItem("refreshToken", data.refresh_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setAccessTokenState(null);
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("access_token");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
   };
 
   return (
