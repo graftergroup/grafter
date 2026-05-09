@@ -48,15 +48,23 @@ async def register(
         franchise_id = user_data.franchise_id
     else:
         # Auto-create a franchise for this user (first-time setup)
-        franchise = Franchise(
-            name=f"{user_data.first_name} {user_data.last_name}'s Franchise",
-            slug=user_data.email.split("@")[0].lower(),
-            email=user_data.email,
-        )
-        db.add(franchise)
-        db.commit()
-        db.refresh(franchise)
-        franchise_id = franchise.id
+        franchise_name = f"{user_data.first_name} {user_data.last_name}'s Franchise"
+        franchise_slug = user_data.email.split("@")[0].lower()
+        
+        # Check if franchise with this name already exists
+        existing_franchise = db.query(Franchise).filter(Franchise.name == franchise_name).first()
+        if existing_franchise:
+            franchise_id = existing_franchise.id
+        else:
+            franchise = Franchise(
+                name=franchise_name,
+                slug=franchise_slug,
+                email=user_data.email,
+            )
+            db.add(franchise)
+            db.commit()
+            db.refresh(franchise)
+            franchise_id = franchise.id
 
     # Create new user
     user = User(
