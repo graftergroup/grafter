@@ -24,8 +24,10 @@ from backend.db import Base
 class UserRole(str, enum.Enum):
     """User role enumeration."""
 
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     FRANCHISE_MANAGER = "franchise_manager"
+    OFFICE_STAFF = "office_staff"
     TECHNICIAN = "technician"
     CUSTOMER = "customer"
 
@@ -74,6 +76,10 @@ class Franchise(Base):
     postal_code = Column(String(20), nullable=True)
     country = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
+    approval_status = Column(String(50), default="approved")  # pending, approved, rejected
+    subscription_status = Column(String(50), default="active")  # active, suspended, cancelled
+    approved_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -107,6 +113,7 @@ class User(Base):
     last_name = Column(String(100), nullable=False)
     phone = Column(String(20), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
+    staff_type = Column(String(50), nullable=True)  # technician, office_manager, etc.
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

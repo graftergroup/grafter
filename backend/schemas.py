@@ -370,3 +370,94 @@ class PaymentResponse(PaymentBase):
 
     class Config:
         from_attributes = True
+
+
+# ==================== Staff Management ====================
+
+
+class StaffCreate(BaseModel):
+    """Staff user creation request."""
+
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    role: UserRole  # TECHNICIAN, OFFICE_STAFF, etc.
+    staff_type: Optional[str] = None  # technician, office_manager, admin, etc.
+    franchise_id: Optional[UUID] = None  # For superadmin creating staff; uses current franchise if not provided
+
+
+class StaffUpdate(BaseModel):
+    """Staff user update request."""
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[UserRole] = None
+    staff_type: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class StaffResponse(UserBase):
+    """Staff user response."""
+
+    id: UUID
+    franchise_id: UUID
+    staff_type: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== Franchise Management ====================
+
+
+class FranchiseCreateRequest(BaseModel):
+    """Superadmin franchise creation request."""
+
+    name: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class FranchiseUpdateRequest(BaseModel):
+    """Superadmin franchise update request."""
+
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    is_active: Optional[bool] = None
+    approval_status: Optional[str] = None  # pending, approved, rejected
+    subscription_status: Optional[str] = None  # active, suspended, cancelled
+    notes: Optional[str] = None
+
+
+class FranchiseDetailResponse(FranchiseBase):
+    """Detailed franchise response (superadmin view)."""
+
+    id: UUID
+    is_active: bool
+    approval_status: str
+    subscription_status: str
+    approved_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

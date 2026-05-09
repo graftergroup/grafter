@@ -1,0 +1,42 @@
+[
+  {
+    "content": "[Backend-Models] Add SUPER_ADMIN role, update Franchise model with approval_status fields",
+    "id": "phase3-1",
+    "status": "completed"
+  },
+  {
+    "content": "[Backend-Routes] Create routes_staff.py and routes_superadmin.py with all endpoints",
+    "id": "phase3-2",
+    "status": "completed"
+  },
+  {
+    "content": "[Backend-Schema] Update schemas for staff and franchise operations",
+    "id": "phase3-3",
+    "status": "completed"
+  },
+  {
+    "content": "[Backend-Integration] Update routes.py, dependencies.py, and auth to register new routers",
+    "id": "phase3-4",
+    "status": "completed"
+  },
+  {
+    "content": "[Frontend-Routes] Add /superadmin/* routes and staff management to App.tsx",
+    "id": "phase3-5",
+    "status": "in_progress"
+  },
+  {
+    "content": "[Frontend-Pages] Create superadmin pages (Dashboard, FranchiseManagement, AllStaff) and franchisee StaffManagement",
+    "id": "phase3-6",
+    "status": "pending"
+  },
+  {
+    "content": "[Frontend-Components] Create superadmin layout, sidebar, and reusable StaffForm/FranchiseCard components",
+    "id": "phase3-7",
+    "status": "pending"
+  },
+  {
+    "content": "[Testing & Commit] Test superadmin login, franchise CRUD, staff management isolation, and commit all changes",
+    "id": "phase3-8",
+    "status": "pending"
+  }
+]

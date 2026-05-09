@@ -44,6 +44,7 @@ const ADMIN_MENU: SidebarItem[] = [
     submenu: [
       { label: "Technicians", href: "/admin/technicians", icon: Users },
       { label: "Workload", href: "/admin/workload", icon: Calendar },
+      { label: "Staff", href: "/admin/staff", icon: Users },
     ],
   },
   {

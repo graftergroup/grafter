@@ -8,6 +8,10 @@ import { RevenueManagement } from "@/pages/admin/RevenueManagement";
 import { TeamManagement } from "@/pages/admin/TeamManagement";
 import { CustomersBookings } from "@/pages/admin/CustomersBookings";
 import { VehicleFleet } from "@/pages/admin/VehicleFleet";
+import { StaffManagement } from "@/pages/admin/StaffManagement";
+import { SuperadminDashboard } from "@/pages/superadmin/SuperadminDashboard";
+import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
+import { AllStaff } from "@/pages/superadmin/AllStaff";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -59,7 +63,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Admin Routes */}
+      {/* Admin/Franchisee Routes */}
       <Route
         path="/admin"
         element={
@@ -129,6 +133,39 @@ function AppRoutes() {
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
             <VehicleFleet />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/staff"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <StaffManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      {/* Superadmin Routes */}
+      <Route
+        path="/superadmin"
+        element={
+          <RoleProtectedRoute allowedRoles={["super_admin"]}>
+            <SuperadminDashboard />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/franchises"
+        element={
+          <RoleProtectedRoute allowedRoles={["super_admin"]}>
+            <FranchiseManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/staff"
+        element={
+          <RoleProtectedRoute allowedRoles={["super_admin"]}>
+            <AllStaff />
           </RoleProtectedRoute>
         }
       />

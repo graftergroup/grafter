@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.auth import verify_token, verify_api_key, get_user_from_token
-from backend.models import User
+from backend.models import User, UserRole
 
 
 async def get_auth_user(
@@ -67,3 +67,32 @@ async def get_auth_user_optional(
         return await get_auth_user(authorization, db)
     except HTTPException:
         return None
+
+
+async def get_superadmin_user(
+    user: User = Depends(get_auth_user),
+) -> User:
+    """Dependency to ensure user has SUPER_ADMIN role."""
+
+    if user.role != UserRole.SUPER_ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Superadmin access required",
+        )
+
+    return user
+
+
+async def get_franchisee_manager(
+    user: User = Depends(get_auth_user),
+) -> User:
+    """Dependency to ensure user has FRANCHISE_MANAGER or SUPER_ADMIN role."""
+
+    if user.role not in [UserRole.FRANCHISE_MANAGER, UserRole.SUPER_ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Franchisee manager access required",
+        )
+
+    return user
+
