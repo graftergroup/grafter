@@ -22,21 +22,21 @@
   {
     "content": "[Frontend-Routes] Add /superadmin/* routes and staff management to App.tsx",
     "id": "phase3-5",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "[Frontend-Pages] Create superadmin pages (Dashboard, FranchiseManagement, AllStaff) and franchisee StaffManagement",
     "id": "phase3-6",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[Frontend-Components] Create superadmin layout, sidebar, and reusable StaffForm/FranchiseCard components",
     "id": "phase3-7",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "[Testing & Commit] Test superadmin login, franchise CRUD, staff management isolation, and commit all changes",
     "id": "phase3-8",
-    "status": "pending"
+    "status": "completed"
   }
 ]

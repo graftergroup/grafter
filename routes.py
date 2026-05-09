@@ -25,6 +25,10 @@ def create_app(static_dir: str) -> FastAPI:
 
     # Create database tables
     create_all_tables()
+    
+    # Initialize superadmin if env vars set
+    from backend.db import init_superadmin
+    init_superadmin()
 
     api = APIRouter()
 
