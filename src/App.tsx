@@ -18,6 +18,7 @@ import { SuperadminDashboard } from "@/pages/superadmin/SuperadminDashboard";
 import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
 import { AllStaff } from "@/pages/superadmin/AllStaff";
 import { BillingManagement } from "@/pages/superadmin/BillingManagement";
+import { FranchiseDetail } from "@/pages/superadmin/FranchiseDetail";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -121,6 +122,7 @@ function AppRoutes() {
       >
         <Route path="/superadmin" element={<SuperadminDashboard />} />
         <Route path="/superadmin/franchises" element={<FranchiseManagement />} />
+        <Route path="/superadmin/franchises/:id" element={<FranchiseDetail />} />
         <Route path="/superadmin/staff" element={<AllStaff />} />
         <Route path="/superadmin/billing" element={<BillingManagement />} />
       </Route>

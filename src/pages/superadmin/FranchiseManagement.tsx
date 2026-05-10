@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
 import type { FranchiseCardData } from "@/components/FranchiseCard";
 import { DataTable, StatusChip, Avatar } from "@/components/DataTable";
@@ -47,6 +48,7 @@ export function FranchiseManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFranchise, setEditingFranchise] = useState<FranchiseCardData | null>(null);
+  const navigate = useNavigate();
 
   // Invite-manager state (shown after franchise creation)
   const [inviteStep, setInviteStep] = useState(false);
@@ -254,7 +256,14 @@ export function FranchiseManagement() {
       key: "name",
       label: "Franchise",
       sortable: true,
-      render: (f) => <Avatar name={f.name} sub={f.email} />,
+      render: (f) => (
+        <button
+          onClick={() => navigate(`/superadmin/franchises/${f.id}`)}
+          className="text-left nav-transition hover:opacity-80"
+        >
+          <Avatar name={f.name} sub={f.email} />
+        </button>
+      ),
     },
     {
       key: "city",

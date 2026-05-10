@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-/* ─── Route label map ──────────────────────────────────────────── */
+/* ─── Route label map (static routes) ─────────────────────────── */
 const ROUTE_LABELS: Record<string, string> = {
   // Admin
   "/admin":                  "Dashboard",
@@ -34,6 +34,8 @@ interface TabContextValue {
   tabs: Tab[];
   closeTab: (path: string) => void;
   closeAll: () => void;
+  /** Register a dynamic route with a custom label (e.g. franchise detail pages) */
+  registerTab: (path: string, label: string) => void;
 }
 
 /* ─── Context ──────────────────────────────────────────────────── */
@@ -41,6 +43,7 @@ const TabContext = createContext<TabContextValue>({
   tabs: [],
   closeTab: () => {},
   closeAll: () => {},
+  registerTab: () => {},
 });
 
 export function useTabContext() {
@@ -59,17 +62,30 @@ export function TabProvider({
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<Tab[]>([]);
 
-  // Auto-add current route as a tab whenever location changes
+  // Auto-add current route as a tab whenever location changes (static routes only)
   useEffect(() => {
     const path = location.pathname;
     const label = ROUTE_LABELS[path];
-    if (!label) return; // ignore unknown routes
+    if (!label) return; // dynamic routes use registerTab instead
 
     setTabs((prev) => {
-      if (prev.some((t) => t.path === path)) return prev; // already open
+      if (prev.some((t) => t.path === path)) return prev;
       return [...prev, { path, label }];
     });
   }, [location.pathname]);
+
+  /** Called by dynamic pages (e.g. FranchiseDetail) once they know their label */
+  const registerTab = useCallback((path: string, label: string) => {
+    setTabs((prev) => {
+      const existing = prev.find((t) => t.path === path);
+      if (existing) {
+        // Update label if it changed (e.g. name loaded async)
+        if (existing.label === label) return prev;
+        return prev.map((t) => (t.path === path ? { ...t, label } : t));
+      }
+      return [...prev, { path, label }];
+    });
+  }, []);
 
   const closeTab = useCallback(
     (path: string) => {
@@ -77,10 +93,8 @@ export function TabProvider({
         const idx = prev.findIndex((t) => t.path === path);
         const next = prev.filter((t) => t.path !== path);
 
-        // If we closed the active tab, navigate to adjacent or home
         if (path === location.pathname) {
-          const target =
-            next[Math.max(0, idx - 1)]?.path ?? homeRoute;
+          const target = next[Math.max(0, idx - 1)]?.path ?? homeRoute;
           navigate(target);
         }
         return next;
@@ -95,7 +109,7 @@ export function TabProvider({
   }, [navigate, homeRoute]);
 
   return (
-    <TabContext.Provider value={{ tabs, closeTab, closeAll }}>
+    <TabContext.Provider value={{ tabs, closeTab, closeAll, registerTab }}>
       {children}
     </TabContext.Provider>
   );

@@ -1,0 +1,32 @@
+[
+  {
+    "content": "Check backend staff route for franchise_id filter support",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "Update useTabs.tsx — add registerTab for dynamic routes",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "Create FranchiseDetail.tsx — full page with inner tabs",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "Update FranchiseManagement.tsx — row click navigates to detail",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "Update App.tsx — add /superadmin/franchises/:id route",
+    "id": "5",
+    "status": "in_progress"
+  },
+  {
+    "content": "Type-check, verify, commit",
+    "id": "6",
+    "status": "pending"
+  }
+]
