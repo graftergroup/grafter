@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ export function BillingManagement() {
   const [records, setRecords] = useState<BillingRecord[]>([]);
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Generate dialog
   const [genOpen, setGenOpen] = useState(false);
@@ -135,7 +137,30 @@ export function BillingManagement() {
       key: "franchise_name",
       label: "Franchise",
       sortable: true,
-      render: (r) => <span className="text-sm font-medium text-foreground">{r.franchise_name ?? "—"}</span>,
+      render: (r) => (
+        <button
+          onClick={() => navigate(`/superadmin/franchises/${r.franchise_id}`)}
+          className="text-left nav-transition hover:opacity-80 flex items-center gap-2 group"
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+            style={{
+              background: "hsl(var(--amber) / 0.12)",
+              border: "1px solid hsl(var(--amber) / 0.25)",
+              color: "hsl(var(--amber))",
+              fontFamily: "'DM Mono', monospace",
+            }}
+          >
+            {(r.franchise_name ?? "?").slice(0, 2).toUpperCase()}
+          </div>
+          <span
+            className="text-sm font-medium underline-offset-2 group-hover:underline"
+            style={{ color: "hsl(var(--foreground))" }}
+          >
+            {r.franchise_name ?? "—"}
+          </span>
+        </button>
+      ),
     },
     {
       key: "period_start",
