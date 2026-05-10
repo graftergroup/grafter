@@ -1,5 +1,6 @@
 """Authentication API routes."""
 
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,8 @@ from backend.schemas import (
     RefreshTokenRequest,
     APIKeyCreate,
     APIKeyResponse,
+    InviteAcceptRequest,
+    StaffResponse,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -220,3 +223,60 @@ async def delete_api_key(
     db.commit()
 
     return {"status": "deleted"}
+
+
+# ==================== Invite Accept ====================
+
+
+@router.get("/invite/{token}")
+async def validate_invite_token(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Validate an invite token and return basic info (no auth required)."""
+    user = db.query(User).filter(User.invitation_token == token).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid invite token")
+    if user.invitation_token_expires and user.invitation_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invite token has expired")
+    if user.invitation_accepted_at:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invite already accepted")
+    return {
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role": user.role,
+        "expires_at": user.invitation_token_expires,
+    }
+
+
+@router.post("/accept-invite", response_model=LoginResponse)
+async def accept_invite(
+    body: InviteAcceptRequest,
+    db: Session = Depends(get_db),
+):
+    """Accept an invite token, set password, and return auth tokens."""
+    user = db.query(User).filter(User.invitation_token == body.token).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid invite token")
+    if user.invitation_token_expires and user.invitation_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invite token has expired")
+    if user.invitation_accepted_at:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invite already accepted")
+
+    user.password_hash = hash_password(body.password)
+    user.is_active = True
+    user.invitation_accepted_at = datetime.utcnow()
+    user.invitation_token = None
+    user.invitation_token_expires = None
+    db.commit()
+    db.refresh(user)
+
+    access_token = create_access_token(str(user.id), str(user.franchise_id), user.role)
+    refresh_token = create_refresh_token(str(user.id), str(user.franchise_id))
+
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user=UserResponse.from_orm(user),
+    )

@@ -388,6 +388,33 @@ class StaffCreate(BaseModel):
     franchise_id: Optional[UUID] = None  # For superadmin creating staff; uses current franchise if not provided
 
 
+class StaffInviteRequest(BaseModel):
+    """Staff invitation request — creates pending user, returns invite link."""
+
+    email: EmailStr
+    first_name: str
+    last_name: str
+    role: UserRole
+    staff_type: Optional[str] = None
+    franchise_id: Optional[UUID] = None  # Superadmin only
+
+
+class InviteTokenResponse(BaseModel):
+    """Response after creating an invite."""
+
+    invite_token: str
+    invite_url: str
+    email: str
+    expires_at: datetime
+
+
+class InviteAcceptRequest(BaseModel):
+    """Accept an invitation and set password."""
+
+    token: str
+    password: str
+
+
 class StaffUpdate(BaseModel):
     """Staff user update request."""
 

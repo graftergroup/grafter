@@ -1,13 +1,15 @@
 """Staff management API routes."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import secrets
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.auth import hash_password
 from backend.dependencies import get_auth_user, get_superadmin_user, get_franchisee_manager
 from backend.models import User, UserRole, Franchise
-from backend.schemas import StaffCreate, StaffUpdate, StaffResponse
+from backend.schemas import StaffCreate, StaffUpdate, StaffResponse, StaffInviteRequest, InviteTokenResponse
 
 router = APIRouter(prefix="/staff", tags=["staff"])
 
@@ -217,3 +219,67 @@ async def delete_staff(
     # Soft delete - mark as inactive
     staff.is_active = False
     db.commit()
+
+
+@router.post("/invite", response_model=InviteTokenResponse, status_code=status.HTTP_201_CREATED)
+async def invite_staff(
+    invite_data: StaffInviteRequest,
+    request: Request,
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Invite a new staff member by email.
+    Creates a pending (inactive) user record and returns an invite link.
+
+    - Superadmin: can invite to any franchise
+    - Franchisee manager: invites to their own franchise only
+    """
+    # Check existing user
+    existing = db.query(User).filter(User.email == invite_data.email).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
+
+    # Determine franchise
+    if user.role == UserRole.SUPER_ADMIN:
+        if invite_data.franchise_id:
+            franchise = db.query(Franchise).filter(Franchise.id == invite_data.franchise_id).first()
+            if not franchise:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Franchise not found")
+            franchise_id = invite_data.franchise_id
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="franchise_id required for superadmin")
+    else:
+        if user.role not in [UserRole.FRANCHISE_MANAGER, UserRole.ADMIN]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised to invite staff")
+        franchise_id = user.franchise_id
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=72)
+
+    new_user = User(
+        franchise_id=franchise_id,
+        email=invite_data.email,
+        first_name=invite_data.first_name,
+        last_name=invite_data.last_name,
+        password_hash=hash_password(secrets.token_urlsafe(16)),  # Temporary placeholder
+        role=invite_data.role,
+        staff_type=invite_data.staff_type,
+        is_active=False,
+        invitation_token=token,
+        invitation_token_expires=expires_at,
+        invited_by_id=user.id,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    base_url = str(request.base_url).rstrip("/")
+    invite_url = f"{base_url}/accept-invite?token={token}"
+
+    return InviteTokenResponse(
+        invite_token=token,
+        invite_url=invite_url,
+        email=invite_data.email,
+        expires_at=expires_at,
+    )

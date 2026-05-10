@@ -115,6 +115,11 @@ class User(Base):
     role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
     staff_type = Column(String(50), nullable=True)  # technician, office_manager, etc.
     is_active = Column(Boolean, default=True)
+    # Invitation fields
+    invitation_token = Column(String(255), nullable=True, unique=True)
+    invitation_token_expires = Column(DateTime, nullable=True)
+    invited_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    invitation_accepted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -122,6 +127,7 @@ class User(Base):
     franchise = relationship("Franchise", back_populates="users")
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     jobs_assigned = relationship("Job", back_populates="assigned_technician")
+    invited_by = relationship("User", remote_side="User.id", foreign_keys=[invited_by_id])
 
 
 class APIKey(Base):

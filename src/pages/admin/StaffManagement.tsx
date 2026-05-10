@@ -10,10 +10,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Trash2, Mail, Copy, Check } from "lucide-react";
 
 interface StaffMember {
   id: string;
@@ -31,6 +46,16 @@ export function StaffManagement() {
   const [filteredStaff, setFilteredStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Invite dialog state
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteFirstName, setInviteFirstName] = useState("");
+  const [inviteLastName, setInviteLastName] = useState("");
+  const [inviteRole, setInviteRole] = useState("technician");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchStaff = async () => {
     try {
@@ -112,6 +137,52 @@ export function StaffManagement() {
     }
   };
 
+  const handleSendInvite = async () => {
+    setInviteLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("/api/staff/invite", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail,
+          first_name: inviteFirstName,
+          last_name: inviteLastName,
+          role: inviteRole,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInviteLink(data.invite_url);
+        fetchStaff();
+      } else {
+        const err = await response.json();
+        alert(err.detail || "Failed to create invite");
+      }
+    } catch {
+      alert("Failed to create invite");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const resetInviteDialog = () => {
+    setInviteEmail("");
+    setInviteFirstName("");
+    setInviteLastName("");
+    setInviteRole("technician");
+    setInviteLink(null);
+    setCopied(false);
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Staff Management">
@@ -123,7 +194,61 @@ export function StaffManagement() {
   return (
     <AdminLayout title="Staff Management" description="Manage your franchise staff members">
       <div className="space-y-6">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {/* Invite Staff Dialog */}
+          <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) resetInviteDialog(); }}>
+            <DialogTrigger asChild>
+              <Button variant="outline"><Mail className="w-4 h-4 mr-2" />Invite Staff</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Invite Staff Member</DialogTitle>
+              </DialogHeader>
+              {!inviteLink ? (
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label>First Name</Label>
+                      <Input value={inviteFirstName} onChange={(e) => setInviteFirstName(e.target.value)} placeholder="Jane" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Last Name</Label>
+                      <Input value={inviteLastName} onChange={(e) => setInviteLastName(e.target.value)} placeholder="Smith" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Email</Label>
+                    <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="jane@example.com" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Role</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technician">Technician</SelectItem>
+                        <SelectItem value="office_staff">Office Staff</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={handleSendInvite} disabled={inviteLoading || !inviteEmail || !inviteFirstName || !inviteLastName}>
+                    {inviteLoading ? "Generating..." : "Generate Invite Link"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4 pt-2">
+                  <p className="text-sm text-muted-foreground">Share this link with <strong>{inviteEmail}</strong>. It expires in 72 hours.</p>
+                  <div className="flex gap-2">
+                    <Input readOnly value={inviteLink} className="text-xs" />
+                    <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                      {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={resetInviteDialog}>Invite Another</Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
           <StaffForm
             onSubmit={handleCreateStaff}
             isSuperadmin={false}

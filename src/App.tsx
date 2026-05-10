@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { AcceptInvitePage } from "@/pages/AcceptInvitePage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { RevenueManagement } from "@/pages/admin/RevenueManagement";
@@ -55,6 +56,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <RegisterPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route
         path="/dashboard"
         element={
