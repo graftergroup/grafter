@@ -2,14 +2,8 @@ import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StaffForm } from "@/components/StaffForm";
 import type { StaffFormData } from "@/components/StaffForm";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, StatusChip, Avatar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -28,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Trash2, Mail, Copy, Check } from "lucide-react";
+import { Trash2, Mail, Copy, Check } from "lucide-react";
 
 interface StaffMember {
   id: string;
@@ -183,13 +176,55 @@ export function StaffManagement() {
     setCopied(false);
   };
 
-  if (loading) {
-    return (
-      <AdminLayout title="Staff Management">
-        <div className="flex items-center justify-center h-96">Loading...</div>
-      </AdminLayout>
-    );
-  }
+  const columns: ColDef<StaffMember>[] = [
+    {
+      key: "first_name",
+      label: "Name",
+      sortable: true,
+      render: (m) => (
+        <Avatar
+          name={`${m.first_name} ${m.last_name}`}
+          sub={m.email}
+        />
+      ),
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      render: (m) => (
+        <span style={{ color: "hsl(var(--muted-foreground))", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem" }}>
+          {m.phone || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "role",
+      label: "Role",
+      sortable: true,
+      render: (m) => <StatusChip value={m.role} />,
+    },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      render: (m) => <StatusChip value={m.is_active ? "active" : "inactive"} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: (m) => (
+        <button
+          onClick={() => handleDeleteStaff(m.id)}
+          className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                     text-[hsl(var(--muted-foreground))] hover:text-destructive
+                     hover:bg-[hsl(var(--destructive)/0.1)]"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <AdminLayout title="Staff Management" description="Manage your franchise staff members">
@@ -256,70 +291,15 @@ export function StaffManagement() {
           />
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted">
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">
-                    {member.first_name} {member.last_name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{member.email}</TableCell>
-                  <TableCell>{member.phone || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {member.role.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={member.is_active ? "default" : "secondary"}
-                    >
-                      {member.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteStaff(member.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {filteredStaff.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No staff members. Create one to get started.
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={staff}
+          rowKey="id"
+          searchPlaceholder="Search by name or email…"
+          searchKeys={["first_name", "last_name", "email"]}
+          loading={loading}
+          emptyText="No staff members yet. Add or invite one to get started."
+        />
       </div>
     </AdminLayout>
   );

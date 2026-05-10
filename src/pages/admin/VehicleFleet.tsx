@@ -2,18 +2,10 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useApi } from "@/hooks/useApi";
 import type { Vehicle } from "@/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, StatusChip } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Edit, Trash2, MapPin, AlertCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, MapPin, AlertCircle, Truck, Zap } from "lucide-react";
 
 export function VehicleFleet() {
   const { call } = useApi();
@@ -50,134 +42,125 @@ export function VehicleFleet() {
   ).length;
 
   return (
-    <AdminLayout title="Vehicle Fleet" description="Manage your service vehicles">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vehicles.length}</div>
-            <p className="text-xs text-muted-foreground">In your fleet</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeVehicles}</div>
-            <p className="text-xs text-muted-foreground">Ready for service</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">GPS Tracking</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{withTracking}</div>
-            <p className="text-xs text-muted-foreground">Vehicles tracked</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {vehicles.length - activeVehicles}
-            </div>
-            <p className="text-xs text-muted-foreground">Maintenance needed</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Vehicles Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Fleet Vehicles</CardTitle>
-            <CardDescription>All service vehicles</CardDescription>
+  const columns: ColDef<Vehicle>[] = [
+    {
+      key: "plate_number",
+      label: "Plate",
+      sortable: true,
+      render: (v) => (
+        <span className="text-sm font-bold tabular-nums tracking-wider text-foreground"
+              style={{ fontFamily: "'DM Mono', monospace" }}>
+          {v.plate_number}
+        </span>
+      ),
+    },
+    {
+      key: "make",
+      label: "Make / Model",
+      sortable: true,
+      render: (v) => (
+        <div>
+          <p className="text-sm font-medium text-foreground">{v.make} {v.model}</p>
+          <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{v.year}</p>
+        </div>
+      ),
+    },
+    {
+      key: "vin",
+      label: "VIN",
+      render: (v) => (
+        <span className="text-xs tabular-nums" style={{ fontFamily: "'DM Mono', monospace", color: "hsl(var(--muted-foreground))" }}>
+          {v.vin ? `···${v.vin.slice(-6)}` : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "current_latitude",
+      label: "GPS",
+      render: (v) =>
+        v.current_latitude && v.current_longitude ? (
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--green))" }}>
+            <MapPin className="w-3 h-3" />
+            <span className="tabular-nums">{v.current_latitude.toFixed(3)}, {v.current_longitude.toFixed(3)}</span>
           </div>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Vehicle
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {vehicles.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No vehicles yet</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Plate Number</TableHead>
-                    <TableHead>Make</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Year</TableHead>
-                    <TableHead>VIN</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Last Update</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {vehicles.map((vehicle) => (
-                    <TableRow key={vehicle.id}>
-                      <TableCell className="font-bold text-lg">{vehicle.plate_number}</TableCell>
-                      <TableCell>{vehicle.make}</TableCell>
-                      <TableCell>{vehicle.model}</TableCell>
-                      <TableCell>{vehicle.year}</TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {vehicle.vin ? vehicle.vin.slice(-6) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {vehicle.current_latitude && vehicle.current_longitude ? (
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="h-4 w-4 text-primary" />
-                            <span>
-                              {vehicle.current_latitude.toFixed(4)},
-                              {vehicle.current_longitude.toFixed(4)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4" />
-                            No location
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {vehicle.last_location_update
-                          ? new Date(vehicle.last_location_update).toLocaleString()
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={vehicle.is_active ? "default" : "secondary"}
-                        >
-                          {vehicle.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        ) : (
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+            <AlertCircle className="w-3 h-3" />
+            No signal
+          </div>
+        ),
+    },
+    {
+      key: "last_location_update",
+      label: "Last Update",
+      sortable: true,
+      render: (v) => (
+        <span className="text-xs tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {v.last_location_update ? new Date(v.last_location_update).toLocaleString() : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      render: (v) => <StatusChip value={v.is_active ? "active" : "inactive"} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: () => (
+        <div className="flex justify-end gap-1">
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-foreground hover:bg-[hsl(var(--accent))]">
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-destructive hover:bg-[hsl(var(--destructive)/0.1)]">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <AdminLayout title="Vehicle Fleet" description="Manage your service vehicles">
+      <div className="space-y-6">
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: "Total Vehicles",  value: vehicles.length,                 icon: Truck,        accent: "hsl(var(--blue))"  },
+            { label: "Active",          value: activeVehicles,                   icon: Zap,          accent: "hsl(var(--green))" },
+            { label: "GPS Tracked",     value: withTracking,                     icon: MapPin,       accent: "hsl(var(--amber))" },
+            { label: "Inactive",        value: vehicles.length - activeVehicles, icon: AlertCircle,  accent: "hsl(var(--red))"   },
+          ].map(({ label, value, icon: Icon, accent }) => (
+            <div key={label} className="rounded-xl p-4 card-elevated flex items-center gap-3"
+                 style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                   style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
+                <Icon className="w-4 h-4" style={{ color: accent }} />
+              </div>
+              <div>
+                <p className="metric-value text-foreground" style={{ fontSize: "1.4rem" }}>{value}</p>
+                <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+
+        <div className="flex justify-end">
+          <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Vehicle</Button>
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={vehicles}
+          rowKey="id"
+          loading={isLoading}
+          emptyText="No vehicles in your fleet yet"
+        />
+      </div>
     </AdminLayout>
   );
 }

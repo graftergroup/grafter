@@ -2,18 +2,9 @@ import { useState, useEffect } from "react";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
 import { StaffForm } from "@/components/StaffForm";
 import type { StaffFormData } from "@/components/StaffForm";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, Trash2 } from "lucide-react";
+import { DataTable, StatusChip, Avatar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
+import { Trash2 } from "lucide-react";
 
 interface StaffMember {
   id: string;
@@ -142,25 +133,62 @@ export function AllStaff() {
     return f ? f.name : "Unknown";
   };
 
-  if (loading) {
-    return (
-      <SuperadminLayout>
-        <div className="flex items-center justify-center h-96">Loading...</div>
-      </SuperadminLayout>
-    );
-  }
+  const columns: ColDef<StaffMember>[] = [
+    {
+      key: "first_name",
+      label: "Name",
+      sortable: true,
+      render: (m) => <Avatar name={`${m.first_name} ${m.last_name}`} sub={m.email} />,
+    },
+    {
+      key: "franchise_id",
+      label: "Franchise",
+      sortable: true,
+      render: (m) => (
+        <span className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {getFranchiseName(m.franchise_id)}
+        </span>
+      ),
+    },
+    {
+      key: "role",
+      label: "Role",
+      sortable: true,
+      render: (m) => <StatusChip value={m.role} />,
+    },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      render: (m) => <StatusChip value={m.is_active ? "active" : "inactive"} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: (m) => (
+        <button
+          onClick={() => handleDeleteStaff(m.id)}
+          className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                     text-[hsl(var(--muted-foreground))] hover:text-destructive
+                     hover:bg-[hsl(var(--destructive)/0.1)]"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <SuperadminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">All Staff</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">All Staff</h1>
+            <p className="text-sm mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
               Manage staff across all franchises
             </p>
           </div>
-
           <StaffForm
             onSubmit={handleCreateStaff}
             isSuperadmin
@@ -169,70 +197,15 @@ export function AllStaff() {
           />
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted">
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Franchise</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">
-                    {member.first_name} {member.last_name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{member.email}</TableCell>
-                  <TableCell>{getFranchiseName(member.franchise_id)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {member.role.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={member.is_active ? "default" : "secondary"}
-                    >
-                      {member.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteStaff(member.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {filteredStaff.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No staff members found
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={staff}
+          rowKey="id"
+          searchPlaceholder="Search by name or email…"
+          searchKeys={["first_name", "last_name", "email"]}
+          loading={loading}
+          emptyText="No staff members found"
+        />
       </div>
     </SuperadminLayout>
   );

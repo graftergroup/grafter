@@ -2,18 +2,10 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useApi } from "@/hooks/useApi";
 import type { Customer, Booking } from "@/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, StatusChip, Avatar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Edit, Trash2, Mail, Phone } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Mail, Phone, Users, Calendar, CheckCircle } from "lucide-react";
 
 export function CustomersBookings() {
   const { call } = useApi();
@@ -56,191 +48,168 @@ export function CustomersBookings() {
   const activeBookings = bookings.filter((b) => b.status === "confirmed").length;
   const pendingBookings = bookings.filter((b) => b.status === "pending").length;
 
+  const customerCols: ColDef<Customer>[] = [
+    {
+      key: "first_name",
+      label: "Customer",
+      sortable: true,
+      render: (c) => <Avatar name={`${c.first_name} ${c.last_name}`} sub={c.email} />,
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      render: (c) => (
+        <span className="text-sm tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {c.phone || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "city",
+      label: "City",
+      sortable: true,
+      render: (c) => <span className="text-sm text-foreground">{c.city || "—"}</span>,
+    },
+    {
+      key: "created_at",
+      label: "Joined",
+      sortable: true,
+      render: (c) => (
+        <span className="text-xs tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {new Date(c.created_at).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      render: (c) => <StatusChip value={c.is_active ? "active" : "inactive"} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: () => (
+        <div className="flex justify-end gap-1">
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-foreground hover:bg-[hsl(var(--accent))]">
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-destructive hover:bg-[hsl(var(--destructive)/0.1)]">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const bookingCols: ColDef<Booking>[] = [
+    {
+      key: "id",
+      label: "Booking ID",
+      render: (b) => (
+        <span className="text-xs tabular-nums font-medium" style={{ fontFamily: "'DM Mono', monospace", color: "hsl(var(--muted-foreground))" }}>
+          #{String(b.id).slice(0, 8)}
+        </span>
+      ),
+    },
+    {
+      key: "scheduled_date",
+      label: "Scheduled",
+      sortable: true,
+      render: (b) => (
+        <span className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {new Date(b.scheduled_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (b) => <StatusChip value={b.status} />,
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      sortable: true,
+      render: (b) => (
+        <span className="text-xs tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {new Date(b.created_at).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: "customer_id",
+      label: "",
+      align: "right",
+      render: () => (
+        <div className="flex justify-end gap-1">
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-foreground hover:bg-[hsl(var(--accent))]">
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <AdminLayout
-      title="Customers & Bookings"
-      description="Manage customers and view their bookings"
-    >
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{customers.length}</div>
-            <p className="text-xs text-muted-foreground">Active customers</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Confirmed Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeBookings}</div>
-            <p className="text-xs text-muted-foreground">Ready to serve</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{pendingBookings}</div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
-          </CardContent>
-        </Card>
+    <AdminLayout title="Customers & Bookings" description="Manage customers and view their bookings">
+      {/* Summary strip */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[
+          { label: "Total Customers",    value: customers.length, icon: Users,       accent: "hsl(var(--blue))"  },
+          { label: "Confirmed Bookings", value: activeBookings,   icon: CheckCircle, accent: "hsl(var(--green))" },
+          { label: "Pending Bookings",   value: pendingBookings,  icon: Calendar,    accent: "hsl(var(--amber))" },
+        ].map(({ label, value, icon: Icon, accent }) => (
+          <div key={label} className="rounded-xl p-4 card-elevated flex items-center gap-3"
+               style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                 style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
+              <Icon className="w-4 h-4" style={{ color: accent }} />
+            </div>
+            <div>
+              <p className="metric-value text-foreground" style={{ fontSize: "1.4rem" }}>{value}</p>
+              <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Customers Table */}
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Customers</CardTitle>
-            <CardDescription>All customers in your database</CardDescription>
+      <div className="space-y-8">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-foreground">Customers</p>
+            <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Customer</Button>
           </div>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Customer
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {customers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No customers yet</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>City</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">
-                        {customer.first_name} {customer.last_name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          {customer.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          {customer.phone}
-                        </div>
-                      </TableCell>
-                      <TableCell>{customer.city || "—"}</TableCell>
-                      <TableCell>
-                        {new Date(customer.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {customer.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <DataTable
+            columns={customerCols}
+            data={customers}
+            rowKey="id"
+            searchPlaceholder="Search customers…"
+            searchKeys={["first_name", "last_name", "email", "city"]}
+            loading={isLoading}
+            emptyText="No customers yet"
+          />
+        </div>
 
-      {/* Bookings Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Bookings</CardTitle>
-            <CardDescription>All service bookings</CardDescription>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-foreground">Bookings</p>
+            <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />New Booking</Button>
           </div>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            New Booking
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {bookings.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No bookings yet</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Booking ID</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Scheduled Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-mono text-sm">
-                        {String(booking.id).slice(0, 8)}
-                      </TableCell>
-                      <TableCell>{String(booking.customer_id).slice(0, 8)}</TableCell>
-                      <TableCell>
-                        {new Date(booking.scheduled_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            booking.status === "confirmed"
-                              ? "default"
-                              : booking.status === "pending"
-                                ? "secondary"
-                                : "outline"
-                          }
-                        >
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(booking.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <DataTable
+            columns={bookingCols}
+            data={bookings}
+            rowKey="id"
+            loading={isLoading}
+            emptyText="No bookings yet"
+          />
+        </div>
+      </div>
     </AdminLayout>
   );
 }

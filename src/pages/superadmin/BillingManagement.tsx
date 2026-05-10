@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,15 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { RefreshCw } from "lucide-react";
+import { DataTable, StatusChip } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
+import { RefreshCw, DollarSign, Building2, TrendingUp } from "lucide-react";
 
 interface Franchise {
   id: string;
@@ -138,37 +130,114 @@ export function BillingManagement() {
   const fmt = (v: number) => `£${v.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
+  const columns: ColDef<BillingRecord>[] = [
+    {
+      key: "franchise_name",
+      label: "Franchise",
+      sortable: true,
+      render: (r) => <span className="text-sm font-medium text-foreground">{r.franchise_name ?? "—"}</span>,
+    },
+    {
+      key: "period_start",
+      label: "Period",
+      sortable: true,
+      render: (r) => (
+        <span className="text-xs tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {fmtDate(r.period_start)} – {fmtDate(r.period_end)}
+        </span>
+      ),
+    },
+    {
+      key: "gross_revenue",
+      label: "Gross Revenue",
+      sortable: true,
+      align: "right",
+      render: (r) => (
+        <span className="text-sm tabular-nums font-medium text-foreground">{fmt(r.gross_revenue)}</span>
+      ),
+    },
+    {
+      key: "commission_rate",
+      label: "Rate",
+      align: "right",
+      render: (r) => (
+        <span className="text-xs tabular-nums" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {(r.commission_rate * 100).toFixed(0)}%
+        </span>
+      ),
+    },
+    {
+      key: "commission_amount",
+      label: "Commission",
+      sortable: true,
+      align: "right",
+      render: (r) => (
+        <span className="text-sm tabular-nums font-semibold" style={{ color: "hsl(var(--amber))" }}>
+          {fmt(r.commission_amount)}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (r) => <StatusChip value={r.status} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: (r) => (
+        <div className="flex justify-end">
+          {r.status === "pending" && (
+            <button
+              onClick={() => handleStatusUpdate(r.id, "invoiced")}
+              className="text-xs px-3 py-1.5 rounded-md nav-transition font-medium"
+              style={{
+                border: "1px solid hsl(var(--border))",
+                color: "hsl(var(--muted-foreground))",
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "hsl(var(--amber))";
+                (e.currentTarget as HTMLButtonElement).style.color = "hsl(var(--amber))";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "hsl(var(--border))";
+                (e.currentTarget as HTMLButtonElement).style.color = "hsl(var(--muted-foreground))";
+              }}
+            >
+              Mark Invoiced
+            </button>
+          )}
+          {r.status === "invoiced" && (
+            <button
+              onClick={() => handleStatusUpdate(r.id, "paid")}
+              className="text-xs px-3 py-1.5 rounded-md nav-transition font-medium"
+              style={{
+                background: "hsl(var(--amber) / 0.15)",
+                color: "hsl(var(--amber))",
+                border: "1px solid hsl(var(--amber) / 0.35)",
+              }}
+            >
+              Mark Paid
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <SuperadminLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Billing & Commission</h2>
-          <p className="text-muted-foreground text-sm mt-1">Track franchise revenue and platform commission</p>
-        </div>
-        {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Franchises</CardTitle>
-            </CardHeader>
-            <CardContent><p className="text-2xl font-bold">{franchises.length}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Commission Pending</CardTitle>
-            </CardHeader>
-            <CardContent><p className="text-2xl font-bold text-amber-500">{fmt(totalPending)}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Commission Collected</CardTitle>
-            </CardHeader>
-            <CardContent><p className="text-2xl font-bold">{fmt(totalPaid)}</p></CardContent>
-          </Card>
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-end">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Billing & Commission</h2>
+            <p className="text-sm mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Track franchise revenue and platform commission
+            </p>
+          </div>
           <Dialog open={genOpen} onOpenChange={setGenOpen}>
             <DialogTrigger asChild>
               <Button><RefreshCw className="w-4 h-4 mr-2" />Generate Billing Period</Button>
@@ -206,62 +275,37 @@ export function BillingManagement() {
           </Dialog>
         </div>
 
-        {/* Billing records table */}
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading...</div>
-        ) : records.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            No billing records yet. Generate a billing period to get started.
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted">
-                    <TableHead>Franchise</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead className="text-right">Gross Revenue</TableHead>
-                    <TableHead className="text-right">Rate</TableHead>
-                    <TableHead className="text-right">Commission</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-36">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((rec) => (
-                    <TableRow key={rec.id}>
-                      <TableCell className="font-medium">{rec.franchise_name ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {fmtDate(rec.period_start)} – {fmtDate(rec.period_end)}
-                      </TableCell>
-                      <TableCell className="text-right">{fmt(rec.gross_revenue)}</TableCell>
-                      <TableCell className="text-right">{(rec.commission_rate * 100).toFixed(0)}%</TableCell>
-                      <TableCell className="text-right font-medium">{fmt(rec.commission_amount)}</TableCell>
-                      <TableCell>
-                        <Badge variant={STATUS_COLORS[rec.status] ?? "outline"}>
-                          {rec.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {rec.status === "pending" && (
-                          <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(rec.id, "invoiced")}>
-                            Mark Invoiced
-                          </Button>
-                        )}
-                        {rec.status === "invoiced" && (
-                          <Button size="sm" onClick={() => handleStatusUpdate(rec.id, "paid")}>
-                            Mark Paid
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+        {/* Summary cards */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: "Total Franchises", value: franchises.length, icon: Building2, accent: "hsl(var(--blue))" },
+            { label: "Commission Pending", value: fmt(totalPending), icon: TrendingUp, accent: "hsl(var(--amber))" },
+            { label: "Commission Collected", value: fmt(totalPaid), icon: DollarSign, accent: "hsl(var(--green))" },
+          ].map(({ label, value, icon: Icon, accent }) => (
+            <div
+              key={label}
+              className="rounded-xl p-4 card-elevated"
+              style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                     style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
+                  <Icon className="w-4 h-4" style={{ color: accent }} />
+                </div>
+                <p className="text-xs font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
+              </div>
+              <p className="metric-value text-foreground">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={records}
+          rowKey="id"
+          loading={loading}
+          emptyText="No billing records yet. Generate a billing period to get started."
+        />
       </div>
     </SuperadminLayout>
   );

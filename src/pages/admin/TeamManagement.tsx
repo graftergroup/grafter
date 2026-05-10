@@ -2,18 +2,10 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useApi } from "@/hooks/useApi";
 import type { User } from "@/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, Avatar, StatusChip, ProgressBar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Edit, Trash2, CheckCircle, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, CheckCircle, Clock, Users, Zap, TrendingUp } from "lucide-react";
 
 interface TechnicianData extends User {
   total_jobs?: number;
@@ -59,127 +51,104 @@ export function TeamManagement() {
       ? (performance.reduce((sum, tech) => sum + tech.completion_rate, 0) / performance.length).toFixed(1)
       : 0;
 
+  interface PerfRow {
+    technician_id: string;
+    name: string;
+    total_jobs: number;
+    completed_jobs: number;
+    completion_rate: number;
+  }
+
+  const columns: ColDef<PerfRow>[] = [
+    {
+      key: "name",
+      label: "Technician",
+      sortable: true,
+      render: (t) => <Avatar name={t.name} />,
+    },
+    {
+      key: "total_jobs",
+      label: "Assigned",
+      sortable: true,
+      align: "right",
+      render: (t) => <span className="tabular-nums text-sm text-foreground">{t.total_jobs}</span>,
+    },
+    {
+      key: "completed_jobs",
+      label: "Completed",
+      sortable: true,
+      align: "right",
+      render: (t) => (
+        <span className="tabular-nums text-sm" style={{ color: "hsl(var(--green))" }}>{t.completed_jobs}</span>
+      ),
+    },
+    {
+      key: "completion_rate",
+      label: "Completion Rate",
+      sortable: true,
+      className: "min-w-[160px]",
+      render: (t) => <ProgressBar value={t.completion_rate} />,
+    },
+    {
+      key: "technician_id",
+      label: "Status",
+      render: (t) => <StatusChip value={t.total_jobs > 0 ? "active" : "inactive"} />,
+    },
+    {
+      key: "technician_id",
+      label: "",
+      align: "right",
+      render: () => (
+        <div className="flex justify-end gap-1">
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-foreground hover:bg-[hsl(var(--accent))]">
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-destructive hover:bg-[hsl(var(--destructive)/0.1)]">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <AdminLayout title="Team Management" description="Manage your technicians and workload">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Technicians</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{performance.length}</div>
-            <p className="text-xs text-muted-foreground">Active team members</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs Assigned</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalJobs}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Completed Jobs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{completedJobs}</div>
-            <p className="text-xs text-muted-foreground">Successfully completed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Avg Completion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgCompletion}%</div>
-            <p className="text-xs text-muted-foreground">Team average</p>
-          </CardContent>
-        </Card>
-      </div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: "Technicians",    value: performance.length, icon: Users,      accent: "hsl(var(--blue))"  },
+            { label: "Jobs Assigned",  value: totalJobs,          icon: Zap,        accent: "hsl(var(--amber))" },
+            { label: "Completed",      value: completedJobs,      icon: CheckCircle,accent: "hsl(var(--green))" },
+            { label: "Avg Completion", value: `${avgCompletion}%`,icon: TrendingUp, accent: "hsl(38 90% 52%)"   },
+          ].map(({ label, value, icon: Icon, accent }) => (
+            <div key={label} className="rounded-xl p-4 card-elevated flex items-center gap-3"
+                 style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                   style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
+                <Icon className="w-4 h-4" style={{ color: accent }} />
+              </div>
+              <div>
+                <p className="metric-value text-foreground" style={{ fontSize: "1.4rem" }}>{value}</p>
+                <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      {/* Technician Performance Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Technician Performance</CardTitle>
-            <CardDescription>Job assignments and completion rates</CardDescription>
-          </div>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Technician
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {performance.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No technicians assigned yet
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Total Jobs</TableHead>
-                    <TableHead>Completed</TableHead>
-                    <TableHead>Completion Rate</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {performance.map((tech) => (
-                    <TableRow key={tech.technician_id}>
-                      <TableCell className="font-medium">{tech.name}</TableCell>
-                      <TableCell>{tech.total_jobs}</TableCell>
-                      <TableCell className="text-green-600">{tech.completed_jobs}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-primary h-2 rounded-full"
-                              style={{
-                                width: `${tech.completion_rate}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium">
-                            {tech.completion_rate.toFixed(1)}%
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={tech.total_jobs > 0 ? "default" : "secondary"}
-                        >
-                          {tech.total_jobs > 0 ? (
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                          ) : (
-                            <Clock className="h-3 w-3 mr-1" />
-                          )}
-                          {tech.total_jobs > 0 ? "Active" : "Idle"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <div className="flex justify-end">
+          <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Technician</Button>
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={performance}
+          rowKey="technician_id"
+          loading={isLoading}
+          emptyText="No technicians assigned yet"
+        />
+      </div>
     </AdminLayout>
   );
 }

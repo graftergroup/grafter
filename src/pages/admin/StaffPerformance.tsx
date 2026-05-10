@@ -1,15 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, Avatar, ProgressBar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import {
   BarChart,
   Bar,
@@ -19,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Users, CheckCircle, TrendingUp, DollarSign, ArrowUpRight } from "lucide-react";
 
 interface TechPerformance {
   id: string;
@@ -54,131 +47,125 @@ export function StaffPerformance() {
   const totalRevenue = data.reduce((s, d) => s + d.estimated_revenue, 0);
 
   return (
+  const columns: ColDef<TechPerformance>[] = [
+    {
+      key: "name",
+      label: "Technician",
+      sortable: true,
+      render: (t) => <Avatar name={t.name} sub={t.email} />,
+    },
+    {
+      key: "total_assigned",
+      label: "Assigned",
+      sortable: true,
+      align: "right",
+      render: (t) => (
+        <span className="tabular-nums text-sm text-foreground">{t.total_assigned}</span>
+      ),
+    },
+    {
+      key: "total_completed",
+      label: "Completed",
+      sortable: true,
+      align: "right",
+      render: (t) => (
+        <span className="tabular-nums text-sm" style={{ color: "hsl(var(--green))" }}>{t.total_completed}</span>
+      ),
+    },
+    {
+      key: "completion_rate",
+      label: "Completion Rate",
+      sortable: true,
+      className: "min-w-[160px]",
+      render: (t) => <ProgressBar value={t.completion_rate} />,
+    },
+    {
+      key: "estimated_revenue",
+      label: "Est. Revenue",
+      sortable: true,
+      align: "right",
+      render: (t) => (
+        <span className="tabular-nums text-sm font-semibold" style={{ color: "hsl(var(--amber))" }}>
+          £{t.estimated_revenue.toLocaleString()}
+        </span>
+      ),
+    },
+  ];
+
+  const CHART_TOOLTIP_STYLE = {
+    contentStyle: {
+      background: "hsl(222 22% 11%)",
+      border: "1px solid hsl(222 18% 16%)",
+      borderRadius: "8px",
+      fontSize: "12px",
+      color: "hsl(210 20% 94%)",
+    },
+  };
+
+  const summaryCards = [
+    { label: "Technicians",        value: data.length,              icon: Users,       accent: "hsl(var(--blue))"  },
+    { label: "Jobs Assigned",      value: totalAssigned,            icon: CheckCircle, accent: "hsl(var(--amber))" },
+    { label: "Avg Completion",     value: `${avgCompletion}%`,      icon: TrendingUp,  accent: "hsl(var(--green))" },
+    { label: "Est. Revenue",       value: `£${totalRevenue.toLocaleString()}`, icon: DollarSign, accent: "hsl(38 90% 52%)" },
+  ];
+
+  return (
     <AdminLayout title="Staff Performance" description="Per-technician job completion and revenue metrics">
-      {loading ? (
-        <div className="flex items-center justify-center h-96">Loading...</div>
-      ) : (
-        <div className="space-y-6">
-          {/* Summary cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Technicians</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{data.length}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Jobs Assigned</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{totalAssigned}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Avg Completion Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{avgCompletion}%</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Est. Revenue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">£{totalRevenue.toLocaleString()}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {data.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              No technician data yet. Assign jobs to staff members to see performance metrics.
+      <div className="space-y-6">
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {summaryCards.map(({ label, value, icon: Icon, accent }) => (
+            <div
+              key={label}
+              className="rounded-xl p-5 card-elevated relative overflow-hidden"
+              style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+            >
+              <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-20 blur-2xl pointer-events-none"
+                   style={{ background: accent }} />
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                     style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
+                  <Icon className="w-4 h-4" style={{ color: accent }} />
+                </div>
+                <ArrowUpRight className="w-4 h-4 opacity-30" style={{ color: "hsl(var(--muted-foreground))" }} />
+              </div>
+              <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</p>
+              <p className="metric-value text-foreground">{value}</p>
             </div>
-          ) : (
-            <>
-              {/* Bar chart — jobs completed per technician */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Jobs Completed per Technician</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(v: string) => v.split(" ")[0]}
-                      />
-                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                      <Tooltip
-                        formatter={(val: number) => [val, "Completed"]}
-                        labelFormatter={(label: string) => `Technician: ${label}`}
-                      />
-                      <Bar dataKey="total_completed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Detail table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Performance Details</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted">
-                        <TableHead>Technician</TableHead>
-                        <TableHead className="text-right">Assigned</TableHead>
-                        <TableHead className="text-right">Completed</TableHead>
-                        <TableHead className="text-right">Rate</TableHead>
-                        <TableHead className="text-right">Est. Revenue</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.map((tech) => (
-                        <TableRow key={tech.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{tech.name}</p>
-                              <p className="text-xs text-muted-foreground">{tech.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">{tech.total_assigned}</TableCell>
-                          <TableCell className="text-right">{tech.total_completed}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge
-                              variant={
-                                tech.completion_rate >= 80
-                                  ? "default"
-                                  : tech.completion_rate >= 50
-                                  ? "secondary"
-                                  : "destructive"
-                              }
-                            >
-                              {tech.completion_rate}%
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            £{tech.estimated_revenue.toLocaleString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </>
-          )}
+          ))}
         </div>
-      )}
+
+        {data.length > 0 && (
+          <div
+            className="rounded-xl p-5 card-elevated"
+            style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+          >
+            <p className="text-sm font-semibold text-foreground mb-4">Jobs Completed per Technician</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={data} barCategoryGap="35%">
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  axisLine={false} tickLine={false}
+                  tickFormatter={(v: string) => v.split(" ")[0]}
+                />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(val: number) => [val, "Completed"]} />
+                <Bar dataKey="total_completed" fill="hsl(var(--amber))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        <DataTable
+          columns={columns}
+          data={data}
+          rowKey="id"
+          loading={loading}
+          emptyText="No technician data yet. Assign jobs to staff members to see performance metrics."
+        />
+      </div>
     </AdminLayout>
   );
 }
