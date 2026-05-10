@@ -2,16 +2,18 @@ import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SuperadminSidebar } from "./SuperadminSidebar";
+import { TabProvider } from "@/hooks/useTabs";
+import { TabBar } from "@/components/TabBar";
 import { ChevronRight, Bell, Shield } from "lucide-react";
 
 const ROUTE_MAP: Record<string, string[]> = {
-  "/superadmin":              ["Overview"],
-  "/superadmin/franchises":   ["Franchises"],
-  "/superadmin/staff":        ["All Staff"],
-  "/superadmin/billing":      ["Billing"],
+  "/superadmin":             ["Overview"],
+  "/superadmin/franchises":  ["Franchises"],
+  "/superadmin/staff":       ["All Staff"],
+  "/superadmin/billing":     ["Billing"],
 };
 
-export function SuperadminLayout({ children }: { children: ReactNode }) {
+function SuperadminLayoutInner({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const crumbs = ROUTE_MAP[location.pathname] ?? ["Platform Admin"];
@@ -23,7 +25,6 @@ export function SuperadminLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="topbar-glass h-14 flex-shrink-0 flex items-center justify-between px-6 z-10">
-          {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-sm">
             <span className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))]">
               <Shield className="w-3.5 h-3.5" style={{ color: "hsl(var(--amber))" }} />
@@ -37,7 +38,6 @@ export function SuperadminLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          {/* Right cluster */}
           <div className="flex items-center gap-3">
             <button
               className="relative w-8 h-8 rounded-md flex items-center justify-center nav-transition
@@ -73,6 +73,9 @@ export function SuperadminLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        {/* Tab bar */}
+        <TabBar />
+
         {/* Content */}
         <main className="flex-1 overflow-auto">
           <div className="p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in-up">
@@ -81,5 +84,13 @@ export function SuperadminLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
     </div>
+  );
+}
+
+export function SuperadminLayout({ children }: { children: ReactNode }) {
+  return (
+    <TabProvider homeRoute="/superadmin">
+      <SuperadminLayoutInner>{children}</SuperadminLayoutInner>
+    </TabProvider>
   );
 }

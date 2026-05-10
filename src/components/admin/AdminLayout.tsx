@@ -1,6 +1,8 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Sidebar } from "@/components/admin/Sidebar";
+import { TabProvider } from "@/hooks/useTabs";
+import { TabBar } from "@/components/TabBar";
 import { Bell, ChevronRight } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -10,22 +12,22 @@ interface AdminLayoutProps {
 }
 
 const ROUTE_MAP: Record<string, string[]> = {
-  "/admin":              ["Dashboard"],
-  "/admin/invoices":     ["Revenue", "Invoices"],
-  "/admin/payments":     ["Revenue", "Payments"],
-  "/admin/revenue-reports": ["Revenue", "Reports"],
-  "/admin/technicians":  ["Team", "Technicians"],
-  "/admin/workload":     ["Team", "Workload"],
-  "/admin/staff":        ["Team", "Staff"],
-  "/admin/performance":  ["Team", "Performance"],
-  "/admin/customers":    ["Customers"],
-  "/admin/bookings":     ["Bookings"],
-  "/admin/vehicles":     ["Vehicles"],
-  "/admin/locations":    ["Locations"],
-  "/admin/settings":     ["Settings"],
+  "/admin":                  ["Dashboard"],
+  "/admin/invoices":         ["Revenue", "Invoices"],
+  "/admin/payments":         ["Revenue", "Payments"],
+  "/admin/revenue-reports":  ["Revenue", "Reports"],
+  "/admin/technicians":      ["Team", "Technicians"],
+  "/admin/workload":         ["Team", "Workload"],
+  "/admin/staff":            ["Team", "Staff"],
+  "/admin/performance":      ["Team", "Performance"],
+  "/admin/customers":        ["Customers"],
+  "/admin/bookings":         ["Bookings"],
+  "/admin/vehicles":         ["Vehicles"],
+  "/admin/locations":        ["Locations"],
+  "/admin/settings":         ["Settings"],
 };
 
-export function AdminLayout({ children, title, description }: AdminLayoutProps) {
+function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
   const { user } = useAuth();
   const location = useLocation();
   const crumbs = ROUTE_MAP[location.pathname] ?? [title];
@@ -37,7 +39,6 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="topbar-glass h-14 flex-shrink-0 flex items-center justify-between px-6 z-10">
-          {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-sm">
             {crumbs.map((crumb, i) => (
               <span key={crumb} className="flex items-center gap-1.5">
@@ -57,7 +58,6 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
             ))}
           </nav>
 
-          {/* Right cluster */}
           <div className="flex items-center gap-3">
             <button
               className="relative w-8 h-8 rounded-md flex items-center justify-center nav-transition
@@ -97,6 +97,9 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
           </div>
         </header>
 
+        {/* Tab bar */}
+        <TabBar />
+
         {/* Page content */}
         <main className="flex-1 overflow-auto">
           <div className="p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in-up">
@@ -110,5 +113,13 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
         </main>
       </div>
     </div>
+  );
+}
+
+export function AdminLayout(props: AdminLayoutProps) {
+  return (
+    <TabProvider homeRoute="/admin">
+      <AdminLayoutInner {...props} />
+    </TabProvider>
   );
 }
