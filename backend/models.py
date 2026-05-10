@@ -80,6 +80,8 @@ class Franchise(Base):
     subscription_status = Column(String(50), default="active")  # active, suspended, cancelled
     approved_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
+    commission_rate = Column(Float, default=0.10)  # 10% platform commission
+    billing_email = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -97,6 +99,9 @@ class Franchise(Base):
     )
     invoices = relationship(
         "Invoice", back_populates="franchise", cascade="all, delete-orphan"
+    )
+    billing_records = relationship(
+        "FranchiseBillingRecord", back_populates="franchise", cascade="all, delete-orphan"
     )
 
 
@@ -307,3 +312,24 @@ class Payment(Base):
 
     # Relationships
     invoice = relationship("Invoice", back_populates="payments")
+
+
+class FranchiseBillingRecord(Base):
+    """Tracks platform commission owed by each franchise per billing period."""
+
+    __tablename__ = "franchise_billing_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    gross_revenue = Column(Float, nullable=False, default=0.0)
+    commission_rate = Column(Float, nullable=False)
+    commission_amount = Column(Float, nullable=False)
+    status = Column(String(50), default="pending")  # pending, invoiced, paid
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    franchise = relationship("Franchise", back_populates="billing_records")

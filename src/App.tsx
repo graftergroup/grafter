@@ -14,6 +14,7 @@ import { StaffPerformance } from "@/pages/admin/StaffPerformance";
 import { SuperadminDashboard } from "@/pages/superadmin/SuperadminDashboard";
 import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
 import { AllStaff } from "@/pages/superadmin/AllStaff";
+import { BillingManagement } from "@/pages/superadmin/BillingManagement";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -177,6 +178,14 @@ function AppRoutes() {
         element={
           <RoleProtectedRoute allowedRoles={["super_admin"]}>
             <AllStaff />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/billing"
+        element={
+          <RoleProtectedRoute allowedRoles={["super_admin"]}>
+            <BillingManagement />
           </RoleProtectedRoute>
         }
       />

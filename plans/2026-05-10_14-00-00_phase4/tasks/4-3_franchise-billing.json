@@ -1,0 +1,32 @@
+[
+  {
+    "content": "[4-3-Models] Add commission_rate + billing_email to Franchise; create FranchiseBillingRecord model",
+    "id": "4-3-1",
+    "status": "completed"
+  },
+  {
+    "content": "[4-3-Schemas] Add billing schemas (BillingRecordResponse, GenerateBillingRequest)",
+    "id": "4-3-2",
+    "status": "completed"
+  },
+  {
+    "content": "[4-3-Routes] Add billing endpoints to routes_superadmin.py (list, generate, mark paid)",
+    "id": "4-3-3",
+    "status": "completed"
+  },
+  {
+    "content": "[4-3-Migration] ALTER TABLE to add new columns + create billing_records table",
+    "id": "4-3-4",
+    "status": "completed"
+  },
+  {
+    "content": "[4-3-Frontend] Create BillingManagement.tsx + SuperadminSidebar link + App.tsx route",
+    "id": "4-3-5",
+    "status": "completed"
+  },
+  {
+    "content": "[4-3-Test] Verify billing generation and listing via API",
+    "id": "4-3-6",
+    "status": "in_progress"
+  }
+]

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Building2, Users, LogOut } from "lucide-react";
+import { Building2, Users, LogOut, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -57,6 +57,19 @@ export function SuperadminSidebar() {
         >
           <Users className="w-4 h-4" />
           All Staff
+        </Link>
+
+        <Link
+          to="/superadmin/billing"
+          className={cn(
+            "flex items-center gap-3 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+            isActive("/superadmin/billing")
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted"
+          )}
+        >
+          <CreditCard className="w-4 h-4" />
+          Billing
         </Link>
       </nav>
 

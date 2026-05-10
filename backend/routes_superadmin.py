@@ -7,11 +7,15 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.dependencies import get_superadmin_user
-from backend.models import User, Franchise, UserRole, Booking, Invoice, Payment, Job
+from backend.models import User, Franchise, UserRole, Booking, Invoice, Payment, Job, FranchiseBillingRecord
 from backend.schemas import (
     FranchiseCreateRequest,
     FranchiseUpdateRequest,
     FranchiseDetailResponse,
+    BillingRecordResponse,
+    GenerateBillingRequest,
+    UpdateBillingStatusRequest,
+    UpdateCommissionRequest,
 )
 
 router = APIRouter(prefix="/superadmin", tags=["superadmin"])
@@ -265,3 +269,126 @@ async def get_platform_analytics(
         "total_jobs": total_jobs,
         "franchises_breakdown": franchises_breakdown,
     }
+
+
+# ==================== Billing / Commission ====================
+
+
+@router.get("/billing", response_model=list[BillingRecordResponse])
+async def list_billing_records(
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+    franchise_id: str = None,
+    status: str = None,
+):
+    """List all billing records. Optionally filter by franchise or status."""
+    query = db.query(FranchiseBillingRecord)
+    if franchise_id:
+        query = query.filter(FranchiseBillingRecord.franchise_id == franchise_id)
+    if status:
+        query = query.filter(FranchiseBillingRecord.status == status)
+    records = query.order_by(FranchiseBillingRecord.period_start.desc()).all()
+
+    result = []
+    for rec in records:
+        franchise = db.query(Franchise).filter(Franchise.id == rec.franchise_id).first()
+        r = BillingRecordResponse.from_orm(rec)
+        r.franchise_name = franchise.name if franchise else None
+        result.append(r)
+    return result
+
+
+@router.post("/billing/generate", response_model=list[BillingRecordResponse], status_code=status.HTTP_201_CREATED)
+async def generate_billing_records(
+    body: GenerateBillingRequest,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate billing records for a date range.
+    Calculates gross revenue (sum of invoices) and applies each franchise's commission rate.
+    """
+    if body.franchise_id:
+        franchises = db.query(Franchise).filter(Franchise.id == body.franchise_id).all()
+    else:
+        franchises = db.query(Franchise).filter(Franchise.is_active == True).all()
+
+    created = []
+    for franchise in franchises:
+        # Check for duplicate period
+        existing = db.query(FranchiseBillingRecord).filter(
+            FranchiseBillingRecord.franchise_id == franchise.id,
+            FranchiseBillingRecord.period_start == body.period_start,
+            FranchiseBillingRecord.period_end == body.period_end,
+        ).first()
+        if existing:
+            continue
+
+        gross = db.query(func.sum(Invoice.total)).filter(
+            Invoice.franchise_id == franchise.id,
+            Invoice.issued_date >= body.period_start,
+            Invoice.issued_date < body.period_end,
+        ).scalar() or 0.0
+
+        rate = franchise.commission_rate or 0.10
+        commission = round(float(gross) * rate, 2)
+
+        rec = FranchiseBillingRecord(
+            franchise_id=franchise.id,
+            period_start=body.period_start,
+            period_end=body.period_end,
+            gross_revenue=float(gross),
+            commission_rate=rate,
+            commission_amount=commission,
+            status="pending",
+        )
+        db.add(rec)
+        db.flush()
+        db.refresh(rec)
+        r = BillingRecordResponse.from_orm(rec)
+        r.franchise_name = franchise.name
+        created.append(r)
+
+    db.commit()
+    return created
+
+
+@router.put("/billing/{record_id}", response_model=BillingRecordResponse)
+async def update_billing_status(
+    record_id: str,
+    body: UpdateBillingStatusRequest,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    """Update billing record status (pending → invoiced → paid)."""
+    rec = db.query(FranchiseBillingRecord).filter(FranchiseBillingRecord.id == record_id).first()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Billing record not found")
+    rec.status = body.status
+    if body.notes:
+        rec.notes = body.notes
+    db.commit()
+    db.refresh(rec)
+    franchise = db.query(Franchise).filter(Franchise.id == rec.franchise_id).first()
+    r = BillingRecordResponse.from_orm(rec)
+    r.franchise_name = franchise.name if franchise else None
+    return r
+
+
+@router.put("/franchises/{franchise_id}/commission", response_model=FranchiseDetailResponse)
+async def update_franchise_commission(
+    franchise_id: str,
+    body: UpdateCommissionRequest,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    """Update a franchise's commission rate and billing email."""
+    franchise = db.query(Franchise).filter(Franchise.id == franchise_id).first()
+    if not franchise:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+    franchise.commission_rate = body.commission_rate
+    if body.billing_email is not None:
+        franchise.billing_email = body.billing_email
+    db.commit()
+    db.refresh(franchise)
+    return FranchiseDetailResponse.from_orm(franchise)

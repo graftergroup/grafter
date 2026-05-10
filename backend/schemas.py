@@ -483,8 +483,54 @@ class FranchiseDetailResponse(FranchiseBase):
     subscription_status: str
     approved_at: Optional[datetime] = None
     notes: Optional[str] = None
+    commission_rate: float = 0.10
+    billing_email: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+# ==================== Franchise Billing ====================
+
+
+class BillingRecordResponse(BaseModel):
+    """Franchise billing record response."""
+
+    id: UUID
+    franchise_id: UUID
+    franchise_name: Optional[str] = None
+    period_start: datetime
+    period_end: datetime
+    gross_revenue: float
+    commission_rate: float
+    commission_amount: float
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GenerateBillingRequest(BaseModel):
+    """Request to generate billing records for a date range."""
+
+    period_start: datetime
+    period_end: datetime
+    franchise_id: Optional[UUID] = None  # None = generate for all franchises
+
+
+class UpdateBillingStatusRequest(BaseModel):
+    """Update billing record status."""
+
+    status: str  # pending, invoiced, paid
+    notes: Optional[str] = None
+
+
+class UpdateCommissionRequest(BaseModel):
+    """Update franchise commission rate."""
+
+    commission_rate: float
+    billing_email: Optional[str] = None
