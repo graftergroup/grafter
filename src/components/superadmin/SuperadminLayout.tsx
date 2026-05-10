@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SuperadminSidebar } from "./SuperadminSidebar";
-import { TabProvider } from "@/hooks/useTabs";
 import { TabBar } from "@/components/TabBar";
 import { ChevronRight, Bell, Shield } from "lucide-react";
 
@@ -88,9 +87,5 @@ function SuperadminLayoutInner({ children }: { children: ReactNode }) {
 }
 
 export function SuperadminLayout({ children }: { children: ReactNode }) {
-  return (
-    <TabProvider homeRoute="/superadmin">
-      <SuperadminLayoutInner>{children}</SuperadminLayoutInner>
-    </TabProvider>
-  );
+  return <SuperadminLayoutInner>{children}</SuperadminLayoutInner>;
 }

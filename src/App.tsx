@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { TabProvider } from "@/hooks/useTabs";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { AcceptInvitePage } from "@/pages/AcceptInvitePage";
@@ -53,6 +54,23 @@ function RoleProtectedRoute({
   return children;
 }
 
+/* ─── Tab layout wrappers (mount once, persist across child navigations) ── */
+function AdminTabLayout() {
+  return (
+    <TabProvider homeRoute="/admin">
+      <Outlet />
+    </TabProvider>
+  );
+}
+
+function SuperadminTabLayout() {
+  return (
+    <TabProvider homeRoute="/superadmin">
+      <Outlet />
+    </TabProvider>
+  );
+}
+
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
@@ -70,136 +88,43 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Admin/Franchisee Routes */}
+
+      {/* Admin/Franchisee Routes — TabProvider mounts once here */}
       <Route
-        path="/admin"
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <AdminDashboard />
+            <AdminTabLayout />
           </RoleProtectedRoute>
         }
-      />
+      >
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/invoices" element={<RevenueManagement />} />
+        <Route path="/admin/revenue-reports" element={<RevenueManagement />} />
+        <Route path="/admin/payments" element={<RevenueManagement />} />
+        <Route path="/admin/technicians" element={<TeamManagement />} />
+        <Route path="/admin/workload" element={<TeamManagement />} />
+        <Route path="/admin/performance" element={<StaffPerformance />} />
+        <Route path="/admin/customers" element={<CustomersBookings />} />
+        <Route path="/admin/bookings" element={<CustomersBookings />} />
+        <Route path="/admin/vehicles" element={<VehicleFleet />} />
+        <Route path="/admin/staff" element={<StaffManagement />} />
+        <Route path="/admin/locations" element={<LocationManagement />} />
+      </Route>
+
+      {/* Superadmin Routes — TabProvider mounts once here */}
       <Route
-        path="/admin/invoices"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <RevenueManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/revenue-reports"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <RevenueManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/payments"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <RevenueManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/technicians"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <TeamManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/workload"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <TeamManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/performance"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <StaffPerformance />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/customers"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <CustomersBookings />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/bookings"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <CustomersBookings />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/vehicles"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <VehicleFleet />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/staff"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <StaffManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/locations"
-        element={
-          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <LocationManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      {/* Superadmin Routes */}
-      <Route
-        path="/superadmin"
         element={
           <RoleProtectedRoute allowedRoles={["super_admin"]}>
-            <SuperadminDashboard />
+            <SuperadminTabLayout />
           </RoleProtectedRoute>
         }
-      />
-      <Route
-        path="/superadmin/franchises"
-        element={
-          <RoleProtectedRoute allowedRoles={["super_admin"]}>
-            <FranchiseManagement />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/superadmin/staff"
-        element={
-          <RoleProtectedRoute allowedRoles={["super_admin"]}>
-            <AllStaff />
-          </RoleProtectedRoute>
-        }
-      />
-      <Route
-        path="/superadmin/billing"
-        element={
-          <RoleProtectedRoute allowedRoles={["super_admin"]}>
-            <BillingManagement />
-          </RoleProtectedRoute>
-        }
-      />
+      >
+        <Route path="/superadmin" element={<SuperadminDashboard />} />
+        <Route path="/superadmin/franchises" element={<FranchiseManagement />} />
+        <Route path="/superadmin/staff" element={<AllStaff />} />
+        <Route path="/superadmin/billing" element={<BillingManagement />} />
+      </Route>
+
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>
   );

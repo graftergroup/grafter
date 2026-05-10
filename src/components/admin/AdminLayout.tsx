@@ -1,7 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Sidebar } from "@/components/admin/Sidebar";
-import { TabProvider } from "@/hooks/useTabs";
 import { TabBar } from "@/components/TabBar";
 import { Bell, ChevronRight } from "lucide-react";
 
@@ -117,9 +116,5 @@ function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
 }
 
 export function AdminLayout(props: AdminLayoutProps) {
-  return (
-    <TabProvider homeRoute="/admin">
-      <AdminLayoutInner {...props} />
-    </TabProvider>
-  );
+  return <AdminLayoutInner {...props} />;
 }
