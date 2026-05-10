@@ -12,6 +12,7 @@ import { CustomersBookings } from "@/pages/admin/CustomersBookings";
 import { VehicleFleet } from "@/pages/admin/VehicleFleet";
 import { StaffManagement } from "@/pages/admin/StaffManagement";
 import { StaffPerformance } from "@/pages/admin/StaffPerformance";
+import { LocationManagement } from "@/pages/admin/LocationManagement";
 import { SuperadminDashboard } from "@/pages/superadmin/SuperadminDashboard";
 import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
 import { AllStaff } from "@/pages/superadmin/AllStaff";
@@ -155,6 +156,14 @@ function AppRoutes() {
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
             <StaffManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/locations"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <LocationManagement />
           </RoleProtectedRoute>
         }
       />

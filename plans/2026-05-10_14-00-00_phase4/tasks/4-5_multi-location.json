@@ -1,0 +1,27 @@
+[
+  {
+    "content": "[4-5-Models] Add FranchiseLocation model + optional location_id FK on User and Job",
+    "id": "4-5-1",
+    "status": "completed"
+  },
+  {
+    "content": "[4-5-Backend] Create routes_locations.py with CRUD endpoints + register in routes.py",
+    "id": "4-5-2",
+    "status": "completed"
+  },
+  {
+    "content": "[4-5-Migration] Create franchise_locations table + add location_id columns",
+    "id": "4-5-3",
+    "status": "completed"
+  },
+  {
+    "content": "[4-5-Frontend] Create LocationManagement.tsx + admin Sidebar link + App.tsx route",
+    "id": "4-5-4",
+    "status": "completed"
+  },
+  {
+    "content": "[4-5-Test] Verify location CRUD via API",
+    "id": "4-5-5",
+    "status": "in_progress"
+  }
+]

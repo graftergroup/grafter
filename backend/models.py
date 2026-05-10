@@ -103,6 +103,9 @@ class Franchise(Base):
     billing_records = relationship(
         "FranchiseBillingRecord", back_populates="franchise", cascade="all, delete-orphan"
     )
+    locations = relationship(
+        "FranchiseLocation", back_populates="franchise", cascade="all, delete-orphan"
+    )
 
 
 class User(Base):
@@ -119,6 +122,7 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
     staff_type = Column(String(50), nullable=True)  # technician, office_manager, etc.
+    location_id = Column(UUID(as_uuid=True), ForeignKey("franchise_locations.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     # Invitation fields
     invitation_token = Column(String(255), nullable=True, unique=True)
@@ -233,6 +237,7 @@ class Job(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True)
+    location_id = Column(UUID(as_uuid=True), ForeignKey("franchise_locations.id"), nullable=True)
     status = Column(Enum(JobStatus), default=JobStatus.PENDING)
     scheduled_date = Column(DateTime, nullable=False)
     completed_date = Column(DateTime, nullable=True)
@@ -333,3 +338,26 @@ class FranchiseBillingRecord(Base):
 
     # Relationships
     franchise = relationship("Franchise", back_populates="billing_records")
+
+
+class FranchiseLocation(Base):
+    """A physical location (branch) belonging to a franchise."""
+
+    __tablename__ = "franchise_locations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    address = Column(Text, nullable=True)
+    city = Column(String(100), nullable=True)
+    state = Column(String(100), nullable=True)
+    postal_code = Column(String(20), nullable=True)
+    country = Column(String(100), nullable=True)
+    phone = Column(String(20), nullable=True)
+    is_primary = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    franchise = relationship("Franchise", back_populates="locations")

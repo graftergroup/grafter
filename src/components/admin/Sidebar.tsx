@@ -13,6 +13,7 @@ import {
   ChevronRight,
   BarChart3,
   TrendingUp,
+  MapPin,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,6 +64,11 @@ const ADMIN_MENU: SidebarItem[] = [
     label: "Vehicles",
     href: "/admin/vehicles",
     icon: Truck,
+  },
+  {
+    label: "Locations",
+    href: "/admin/locations",
+    icon: MapPin,
   },
   {
     label: "Settings",
