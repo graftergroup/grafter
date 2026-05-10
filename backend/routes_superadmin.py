@@ -64,9 +64,8 @@ async def create_franchise(
         postal_code=franchise_data.postal_code,
         country=franchise_data.country,
         notes=franchise_data.notes,
-        approval_status="approved",
+        approval_status="pending",  # Requires superadmin approval
         subscription_status="active",
-        approved_at=datetime.utcnow(),
     )
 
     db.add(new_franchise)
@@ -173,6 +172,42 @@ async def delete_franchise(
     # Soft delete
     franchise.is_active = not franchise.is_active
     db.commit()
+
+
+@router.post("/franchises/{franchise_id}/approve", response_model=FranchiseDetailResponse)
+async def approve_franchise(
+    franchise_id: str,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    """Approve a pending franchise."""
+    franchise = db.query(Franchise).filter(Franchise.id == franchise_id).first()
+    if not franchise:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+    franchise.approval_status = "approved"
+    franchise.approved_at = datetime.utcnow()
+    db.commit()
+    db.refresh(franchise)
+    return FranchiseDetailResponse.from_orm(franchise)
+
+
+@router.post("/franchises/{franchise_id}/reject", response_model=FranchiseDetailResponse)
+async def reject_franchise(
+    franchise_id: str,
+    notes: str = None,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    """Reject a pending franchise."""
+    franchise = db.query(Franchise).filter(Franchise.id == franchise_id).first()
+    if not franchise:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+    franchise.approval_status = "rejected"
+    if notes:
+        franchise.notes = notes
+    db.commit()
+    db.refresh(franchise)
+    return FranchiseDetailResponse.from_orm(franchise)
 
 
 @router.get("/franchises/{franchise_id}/stats")

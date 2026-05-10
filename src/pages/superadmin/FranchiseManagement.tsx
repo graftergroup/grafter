@@ -22,7 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const franchiseFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -158,6 +159,25 @@ export function FranchiseManagement() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this franchise?")) return;
     await handleToggleActive(id, false);
+  };
+
+  const handleApprove = async (id: string) => {
+    const token = localStorage.getItem("access_token");
+    await fetch(`/api/superadmin/franchises/${id}/approve`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    fetchFranchises();
+  };
+
+  const handleReject = async (id: string) => {
+    if (!confirm("Reject this franchise application?")) return;
+    const token = localStorage.getItem("access_token");
+    await fetch(`/api/superadmin/franchises/${id}/reject`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    fetchFranchises();
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -319,6 +339,38 @@ export function FranchiseManagement() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+        {/* Pending Approval Section */}
+        {filteredFranchises.filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending").length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold flex items-center gap-2">
+              <Badge variant="secondary">Pending Approval</Badge>
+              <span className="text-muted-foreground font-normal text-sm">
+                {filteredFranchises.filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending").length} awaiting review
+              </span>
+            </h2>
+            <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
+              {filteredFranchises
+                .filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending")
+                .map(franchise => (
+                  <div key={franchise.id} className="flex items-center justify-between px-4 py-3 bg-card">
+                    <div>
+                      <p className="font-medium text-sm">{franchise.name}</p>
+                      <p className="text-xs text-muted-foreground">{franchise.email}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleApprove(franchise.id)}>
+                        <CheckCircle className="w-4 h-4 mr-1" />Approve
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleReject(franchise.id)}>
+                        <XCircle className="w-4 h-4 mr-1" />Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

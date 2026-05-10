@@ -1,0 +1,32 @@
+[
+  {
+    "content": "[4-4-Routes-SA] Add POST /api/superadmin/franchises/{id}/approve and /reject endpoints",
+    "id": "4-4-1",
+    "status": "completed"
+  },
+  {
+    "content": "[4-4-Routes-Auth] Block login if franchise approval_status != approved",
+    "id": "4-4-2",
+    "status": "completed"
+  },
+  {
+    "content": "[4-4-Routes-SA-Default] Set new franchises to pending by default in superadmin create route",
+    "id": "4-4-3",
+    "status": "completed"
+  },
+  {
+    "content": "[4-4-Frontend-SA] Add approve/reject buttons + approval badge to FranchiseManagement.tsx",
+    "id": "4-4-4",
+    "status": "completed"
+  },
+  {
+    "content": "[4-4-Frontend-Login] Handle pending_approval error + create PendingApprovalPage.tsx",
+    "id": "4-4-5",
+    "status": "completed"
+  },
+  {
+    "content": "[4-4-Test] Verify approval flow end-to-end",
+    "id": "4-4-6",
+    "status": "in_progress"
+  }
+]

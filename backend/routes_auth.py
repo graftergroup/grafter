@@ -116,6 +116,20 @@ async def login(
             detail="User account is inactive",
         )
 
+    # Block non-superadmin users whose franchise is pending approval
+    if user.role != UserRole.SUPER_ADMIN:
+        franchise = db.query(Franchise).filter(Franchise.id == user.franchise_id).first()
+        if franchise and franchise.approval_status == "pending":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="franchise_pending_approval",
+            )
+        if franchise and franchise.approval_status == "rejected":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="franchise_rejected",
+            )
+
     # Generate tokens
     access_token = create_access_token(str(user.id), str(user.franchise_id), user.role)
     refresh_token = create_refresh_token(str(user.id), str(user.franchise_id))

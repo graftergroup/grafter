@@ -22,6 +22,27 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
+      // Direct login call to inspect error detail before using useAuth
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.detail === "franchise_pending_approval") {
+          navigate("/pending-approval");
+          return;
+        }
+        if (data.detail === "franchise_rejected") {
+          setError("Your franchise application has been rejected. Please contact support.");
+          return;
+        }
+        setError(data.detail || "Login failed");
+        return;
+      }
+
       await login(email, password);
       const storedUser = JSON.parse(localStorage.getItem("user") || "null");
       const role = storedUser?.role;
