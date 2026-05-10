@@ -18,6 +18,7 @@ from backend.models import (
     BookingStatus,
     JobStatus,
     PaymentStatus,
+    UserRole,
 )
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -347,3 +348,66 @@ async def get_job_completion_rate(
         "completed_jobs": completed_jobs,
         "completion_rate": round(completion_rate, 2),
     }
+
+
+@router.get("/staff-performance")
+async def get_staff_performance(
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Per-technician performance metrics for the franchise.
+    Returns jobs assigned, jobs completed, completion rate, and revenue contribution.
+    """
+    technicians = (
+        db.query(User)
+        .filter(
+            User.franchise_id == user.franchise_id,
+            User.role == UserRole.TECHNICIAN,
+            User.is_active == True,
+        )
+        .all()
+    )
+
+    result = []
+    for tech in technicians:
+        total_assigned = (
+            db.query(func.count(Job.id))
+            .filter(Job.assigned_technician_id == tech.id)
+            .scalar() or 0
+        )
+        total_completed = (
+            db.query(func.count(Job.id))
+            .filter(
+                Job.assigned_technician_id == tech.id,
+                Job.status == JobStatus.COMPLETED,
+            )
+            .scalar() or 0
+        )
+        completion_rate = round((total_completed / total_assigned * 100) if total_assigned > 0 else 0, 1)
+
+        # Revenue: sum of invoice totals for completed jobs linked to this tech
+        # via booking_id chain: job -> booking -> invoice (by customer)
+        # Simpler: sum invoices in same franchise weighted by completed job count
+        # We'll track revenue by jobs completed (proxy: avg invoice per completed job)
+        avg_invoice = (
+            db.query(func.avg(Invoice.total))
+            .filter(Invoice.franchise_id == user.franchise_id)
+            .scalar() or 0
+        )
+        estimated_revenue = round(float(avg_invoice) * total_completed, 2)
+
+        result.append({
+            "id": str(tech.id),
+            "name": f"{tech.first_name} {tech.last_name}",
+            "email": tech.email,
+            "staff_type": tech.staff_type,
+            "total_assigned": total_assigned,
+            "total_completed": total_completed,
+            "completion_rate": completion_rate,
+            "estimated_revenue": estimated_revenue,
+        })
+
+    # Sort by completed jobs desc
+    result.sort(key=lambda x: x["total_completed"], reverse=True)
+    return result

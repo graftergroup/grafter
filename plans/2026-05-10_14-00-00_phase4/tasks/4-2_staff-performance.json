@@ -1,0 +1,22 @@
+[
+  {
+    "content": "[4-2-Backend] Add GET /api/analytics/staff-performance endpoint",
+    "id": "4-2-1",
+    "status": "completed"
+  },
+  {
+    "content": "[4-2-Frontend-Page] Create StaffPerformance.tsx with bar chart + stats table",
+    "id": "4-2-2",
+    "status": "completed"
+  },
+  {
+    "content": "[4-2-Frontend-Nav] Add Performance link to admin Sidebar + App.tsx route",
+    "id": "4-2-3",
+    "status": "completed"
+  },
+  {
+    "content": "[4-2-Test] Verify performance page loads with real data",
+    "id": "4-2-4",
+    "status": "in_progress"
+  }
+]

@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   BarChart3,
+  TrendingUp,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,7 @@ const ADMIN_MENU: SidebarItem[] = [
       { label: "Technicians", href: "/admin/technicians", icon: Users },
       { label: "Workload", href: "/admin/workload", icon: Calendar },
       { label: "Staff", href: "/admin/staff", icon: Users },
+      { label: "Performance", href: "/admin/performance", icon: TrendingUp },
     ],
   },
   {

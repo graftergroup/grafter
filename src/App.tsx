@@ -10,6 +10,7 @@ import { TeamManagement } from "@/pages/admin/TeamManagement";
 import { CustomersBookings } from "@/pages/admin/CustomersBookings";
 import { VehicleFleet } from "@/pages/admin/VehicleFleet";
 import { StaffManagement } from "@/pages/admin/StaffManagement";
+import { StaffPerformance } from "@/pages/admin/StaffPerformance";
 import { SuperadminDashboard } from "@/pages/superadmin/SuperadminDashboard";
 import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
 import { AllStaff } from "@/pages/superadmin/AllStaff";
@@ -111,6 +112,14 @@ function AppRoutes() {
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
             <TeamManagement />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/performance"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
+            <StaffPerformance />
           </RoleProtectedRoute>
         }
       />
