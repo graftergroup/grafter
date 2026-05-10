@@ -19,6 +19,8 @@ import { FranchiseManagement } from "@/pages/superadmin/FranchiseManagement";
 import { AllStaff } from "@/pages/superadmin/AllStaff";
 import { BillingManagement } from "@/pages/superadmin/BillingManagement";
 import { FranchiseDetail } from "@/pages/superadmin/FranchiseDetail";
+import { AdminStaffDetail, SuperadminStaffDetail } from "@/pages/shared/StaffDetail";
+import { InvoiceDetail } from "@/pages/admin/InvoiceDetail";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -100,6 +102,7 @@ function AppRoutes() {
       >
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/invoices" element={<RevenueManagement />} />
+        <Route path="/admin/invoices/:id" element={<InvoiceDetail />} />
         <Route path="/admin/revenue-reports" element={<RevenueManagement />} />
         <Route path="/admin/payments" element={<RevenueManagement />} />
         <Route path="/admin/technicians" element={<TeamManagement />} />
@@ -109,6 +112,7 @@ function AppRoutes() {
         <Route path="/admin/bookings" element={<CustomersBookings />} />
         <Route path="/admin/vehicles" element={<VehicleFleet />} />
         <Route path="/admin/staff" element={<StaffManagement />} />
+        <Route path="/admin/staff/:id" element={<AdminStaffDetail />} />
         <Route path="/admin/locations" element={<LocationManagement />} />
       </Route>
 
@@ -124,6 +128,7 @@ function AppRoutes() {
         <Route path="/superadmin/franchises" element={<FranchiseManagement />} />
         <Route path="/superadmin/franchises/:id" element={<FranchiseDetail />} />
         <Route path="/superadmin/staff" element={<AllStaff />} />
+        <Route path="/superadmin/staff/:id" element={<SuperadminStaffDetail />} />
         <Route path="/superadmin/billing" element={<BillingManagement />} />
       </Route>
 

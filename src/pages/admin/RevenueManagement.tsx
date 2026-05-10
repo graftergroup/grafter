@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useApi } from "@/hooks/useApi";
 import type { Invoice, Payment } from "@/types";
@@ -12,6 +13,7 @@ const ITEMS_PER_PAGE = 10;
 
 export function RevenueManagement() {
   const { call } = useApi();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,10 +91,15 @@ export function RevenueManagement() {
       label: "Invoice #",
       sortable: true,
       render: (inv) => (
-        <span className="text-xs tabular-nums font-medium"
-              style={{ fontFamily: "'DM Mono', monospace", color: "hsl(var(--muted-foreground))" }}>
-          {inv.invoice_number}
-        </span>
+        <button
+          onClick={() => navigate(`/admin/invoices/${inv.id}`)}
+          className="nav-transition hover:opacity-80"
+        >
+          <span className="text-xs tabular-nums font-medium underline-offset-2 hover:underline"
+                style={{ fontFamily: "'DM Mono', monospace", color: "hsl(var(--amber))" }}>
+            {inv.invoice_number}
+          </span>
+        </button>
       ),
     },
     {

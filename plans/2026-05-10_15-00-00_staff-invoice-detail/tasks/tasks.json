@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Create StaffDetail.tsx — profile, jobs, settings inner tabs",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "Create InvoiceDetail.tsx — summary, payments, jobs inner tabs",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "Update AllStaff + StaffManagement — name cell navigates to detail",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "Update RevenueManagement — invoice row navigates to detail",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "Update App.tsx — add new routes for both areas",
+    "id": "5",
+    "status": "completed"
+  },
+  {
+    "content": "Update useTabs ROUTE_LABELS for staff paths",
+    "id": "6",
+    "status": "completed"
+  },
+  {
+    "content": "Type-check + commit",
+    "id": "7",
+    "status": "in_progress"
+  }
+]

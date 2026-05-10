@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StaffForm } from "@/components/StaffForm";
 import type { StaffFormData } from "@/components/StaffForm";
@@ -39,6 +40,7 @@ export function StaffManagement() {
   const [filteredStaff, setFilteredStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -182,10 +184,12 @@ export function StaffManagement() {
       label: "Name",
       sortable: true,
       render: (m) => (
-        <Avatar
-          name={`${m.first_name} ${m.last_name}`}
-          sub={m.email}
-        />
+        <button
+          onClick={() => navigate(`/admin/staff/${m.id}`)}
+          className="text-left nav-transition hover:opacity-80"
+        >
+          <Avatar name={`${m.first_name} ${m.last_name}`} sub={m.email} />
+        </button>
       ),
     },
     {

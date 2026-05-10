@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
 import { StaffForm } from "@/components/StaffForm";
 import type { StaffFormData } from "@/components/StaffForm";
@@ -29,6 +30,7 @@ export function AllStaff() {
   const [filteredStaff, setFilteredStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const fetchStaff = async () => {
     try {
@@ -138,7 +140,14 @@ export function AllStaff() {
       key: "first_name",
       label: "Name",
       sortable: true,
-      render: (m) => <Avatar name={`${m.first_name} ${m.last_name}`} sub={m.email} />,
+      render: (m) => (
+        <button
+          onClick={() => navigate(`/superadmin/staff/${m.id}`)}
+          className="text-left nav-transition hover:opacity-80"
+        >
+          <Avatar name={`${m.first_name} ${m.last_name}`} sub={m.email} />
+        </button>
+      ),
     },
     {
       key: "franchise_id",

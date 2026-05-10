@@ -62,11 +62,12 @@ export function TabProvider({
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<Tab[]>([]);
 
-  // Auto-add current route as a tab whenever location changes (static routes only)
+  // Auto-add current route as a tab whenever location changes (static routes only).
+  // Dynamic routes (e.g. /superadmin/franchises/:id) use registerTab() instead.
   useEffect(() => {
     const path = location.pathname;
     const label = ROUTE_LABELS[path];
-    if (!label) return; // dynamic routes use registerTab instead
+    if (!label) return;
 
     setTabs((prev) => {
       if (prev.some((t) => t.path === path)) return prev;
@@ -74,7 +75,7 @@ export function TabProvider({
     });
   }, [location.pathname]);
 
-  /** Called by dynamic pages (e.g. FranchiseDetail) once they know their label */
+  /** Called by dynamic pages (e.g. FranchiseDetail, StaffDetail) once they know their label */
   const registerTab = useCallback((path: string, label: string) => {
     setTabs((prev) => {
       const existing = prev.find((t) => t.path === path);
