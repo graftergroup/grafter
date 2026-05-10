@@ -1,51 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
-  }
+    /* Dark premium ops theme */
+    --background: 222 25% 8%;
+    --foreground: 210 20% 94%;
 
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --card: 222 22% 11%;
+    --card-foreground: 210 20% 94%;
+
+    --popover: 222 22% 11%;
+    --popover-foreground: 210 20% 94%;
+
+    /* Amber/gold primary */
+    --primary: 42 95% 58%;
+    --primary-foreground: 222 25% 8%;
+
+    --secondary: 222 18% 18%;
+    --secondary-foreground: 210 20% 80%;
+
+    --muted: 222 18% 14%;
+    --muted-foreground: 215 15% 52%;
+
+    --accent: 222 20% 16%;
+    --accent-foreground: 210 20% 94%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+
+    --border: 222 18% 16%;
+    --input: 222 18% 16%;
+    --ring: 42 95% 58%;
+
+    --radius: 0.5rem;
+
+    /* Custom tokens */
+    --sidebar-bg: 222 28% 6%;
+    --sidebar-border: 222 18% 13%;
+    --sidebar-item-hover: 222 20% 14%;
+    --sidebar-item-active: 42 95% 58%;
+    --topbar-bg: 222 25% 8%;
+
+    /* Glow accents */
+    --amber: 42 95% 58%;
+    --amber-dim: 42 60% 30%;
+    --green: 158 70% 45%;
+    --red: 0 72% 51%;
+    --blue: 210 85% 58%;
   }
 }
 
@@ -55,5 +60,124 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  /* Mono for numbers/data */
+  .font-mono, .tabular-nums {
+    font-family: 'DM Mono', 'Fira Code', monospace;
+  }
+}
+
+@layer utilities {
+  /* Sidebar glow on active */
+  .sidebar-active-glow {
+    box-shadow: 0 0 0 1px hsl(var(--amber) / 0.3), 0 0 12px hsl(var(--amber) / 0.15);
+  }
+
+  /* Card depth */
+  .card-elevated {
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.4), 0 4px 16px hsl(0 0% 0% / 0.2);
+  }
+
+  /* Topbar glass */
+  .topbar-glass {
+    background: hsl(var(--topbar-bg) / 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  /* Metric number */
+  .metric-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.75rem;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  /* Subtle grid background */
+  .grid-bg {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Status dot */
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .status-dot-green {
+    background: hsl(var(--green));
+    box-shadow: 0 0 6px hsl(var(--green) / 0.8);
+  }
+
+  .status-dot-amber {
+    background: hsl(var(--amber));
+    box-shadow: 0 0 6px hsl(var(--amber) / 0.8);
+  }
+
+  .status-dot-red {
+    background: hsl(var(--red));
+    box-shadow: 0 0 6px hsl(var(--red) / 0.8);
+  }
+
+  /* Sidebar width tokens */
+  .sidebar-expanded { width: 224px; }
+  .sidebar-collapsed { width: 64px; }
+
+  /* Nav transitions */
+  .nav-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Pill badge */
+  .pill-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 100px;
+    background: hsl(var(--amber) / 0.15);
+    color: hsl(var(--amber));
+    border: 1px solid hsl(var(--amber) / 0.3);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+  /* Fade-in-up for page content */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.25s ease forwards;
+  }
+
+  /* Shimmer loading skeleton */
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--accent)) 50%, hsl(var(--muted)) 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.6s infinite linear;
+    border-radius: var(--radius);
   }
 }
