@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { SuperadminLayout } from "@/components/superadmin/SuperadminLayout";
-import { FranchiseCard } from "@/components/FranchiseCard";
 import type { FranchiseCardData } from "@/components/FranchiseCard";
+import { DataTable, StatusChip, Avatar } from "@/components/DataTable";
+import type { ColDef } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,8 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus, Search, CheckCircle, XCircle, Copy, Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus, CheckCircle, XCircle, Copy, Check, Edit, Trash2, MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 const franchiseFormSchema = z.object({
@@ -246,21 +246,128 @@ export function FranchiseManagement() {
     }
   };
 
+  // ── Column definitions ───────────────────────────────────────
+  type FranchiseRow = FranchiseCardData & { approval_status?: string };
+
+  const columns: ColDef<FranchiseRow>[] = [
+    {
+      key: "name",
+      label: "Franchise",
+      sortable: true,
+      render: (f) => <Avatar name={f.name} sub={f.email} />,
+    },
+    {
+      key: "city",
+      label: "Location",
+      sortable: true,
+      render: (f) => (
+        <div className="flex items-center gap-1.5 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+          {(f.city || f.state) && <MapPin className="w-3 h-3 flex-shrink-0" />}
+          <span>{[f.city, f.state].filter(Boolean).join(", ") || "—"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "approval_status",
+      label: "Status",
+      sortable: true,
+      render: (f) => {
+        const status = f.approval_status ?? (f.is_active ? "approved" : "inactive");
+        return <StatusChip value={status} />;
+      },
+    },
+    {
+      key: "is_active",
+      label: "Active",
+      sortable: true,
+      render: (f) => <StatusChip value={f.is_active ? "active" : "inactive"} />,
+    },
+    {
+      key: "id",
+      label: "",
+      align: "right",
+      render: (f) => {
+        const status = (f as FranchiseRow).approval_status;
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            {status === "pending" && (
+              <>
+                <button
+                  onClick={() => handleApprove(f.id)}
+                  title="Approve"
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md nav-transition font-medium"
+                  style={{ background: "hsl(var(--green) / 0.12)", color: "hsl(var(--green))", border: "1px solid hsl(var(--green) / 0.3)" }}
+                >
+                  <CheckCircle className="w-3 h-3" /> Approve
+                </button>
+                <button
+                  onClick={() => handleReject(f.id)}
+                  title="Reject"
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md nav-transition font-medium"
+                  style={{ background: "hsl(var(--red) / 0.1)", color: "hsl(var(--red))", border: "1px solid hsl(var(--red) / 0.25)" }}
+                >
+                  <XCircle className="w-3 h-3" /> Reject
+                </button>
+              </>
+            )}
+            {status !== "pending" && (
+              <>
+                <button
+                  onClick={() => handleEdit(f)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-foreground hover:bg-[hsl(var(--accent))]"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(f.id)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center nav-transition
+                             text-[hsl(var(--muted-foreground))] hover:text-destructive hover:bg-[hsl(var(--destructive)/0.1)]"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
   if (loading) {
     return (
       <SuperadminLayout>
-        <div className="flex items-center justify-center h-96">Loading...</div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="skeleton h-7 w-36 rounded" />
+              <div className="skeleton h-4 w-48 rounded" />
+            </div>
+            <div className="skeleton h-9 w-32 rounded-lg" />
+          </div>
+          <div className="skeleton h-[400px] rounded-xl" />
+        </div>
       </SuperadminLayout>
     );
   }
 
+  const pendingCount = franchises.filter(
+    (f) => (f as FranchiseRow).approval_status === "pending"
+  ).length;
+
   return (
     <SuperadminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Franchises</h1>
-            <p className="text-muted-foreground mt-1">Manage all franchises</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Franchises</h1>
+            <p className="text-sm mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+              {franchises.length} total
+              {pendingCount > 0 && (
+                <span className="ml-2 pill-badge">{pendingCount} pending</span>
+              )}
+            </p>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -426,86 +533,68 @@ export function FranchiseManagement() {
                     />
                   </div>
 
-                  <div className="flex gap-3 justify-end pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleDialogOpenChange(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingFranchise ? "Update" : "Create"}
-                    </Button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="postal_code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Postal Code</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </form>
-              </Form>
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full">
+                    {editingFranchise ? "Update Franchise" : "Create Franchise"}
+                  </Button>
+                  </form>
+                </Form>
               )}
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search franchises..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* Pending Approval Section */}
-        {filteredFranchises.filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending").length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <Badge variant="secondary">Pending Approval</Badge>
-              <span className="text-muted-foreground font-normal text-sm">
-                {filteredFranchises.filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending").length} awaiting review
-              </span>
-            </h2>
-            <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
-              {filteredFranchises
-                .filter(f => (f as FranchiseCardData & { approval_status?: string }).approval_status === "pending")
-                .map(franchise => (
-                  <div key={franchise.id} className="flex items-center justify-between px-4 py-3 bg-card">
-                    <div>
-                      <p className="font-medium text-sm">{franchise.name}</p>
-                      <p className="text-xs text-muted-foreground">{franchise.email}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleApprove(franchise.id)}>
-                        <CheckCircle className="w-4 h-4 mr-1" />Approve
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleReject(franchise.id)}>
-                        <XCircle className="w-4 h-4 mr-1" />Reject
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredFranchises.map((franchise) => (
-            <FranchiseCard
-              key={franchise.id}
-              franchise={franchise}
-              onEdit={handleEdit}
-              onToggleActive={handleToggleActive}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-
-        {filteredFranchises.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No franchises found
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={franchises as FranchiseRow[]}
+          rowKey="id"
+          searchPlaceholder="Search by name, email or city…"
+          searchKeys={["name", "email", "city"]}
+          loading={loading}
+          emptyText="No franchises yet. Create one to get started."
+        />
       </div>
     </SuperadminLayout>
   );
