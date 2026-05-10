@@ -41,7 +41,6 @@ export function VehicleFleet() {
     (v) => v.current_latitude && v.current_longitude
   ).length;
 
-  return (
   const columns: ColDef<Vehicle>[] = [
     {
       key: "plate_number",

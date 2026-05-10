@@ -77,6 +77,12 @@ export function RevenueManagement() {
 
   if (isLoading) {
     return (
+      <AdminLayout title="Revenue Management" description="Manage invoices and payments">
+        <div className="flex items-center justify-center h-96">Loading revenue data...</div>
+      </AdminLayout>
+    );
+  }
+
   const invoiceCols: ColDef<Invoice>[] = [
     {
       key: "invoice_number",
@@ -211,7 +217,7 @@ export function RevenueManagement() {
           {[
             { label: "Total Revenue", value: `$${totalRevenue.toFixed(2)}`,  accent: "hsl(var(--amber))" },
             { label: "Paid",          value: `$${paidAmount.toFixed(2)}`,    accent: "hsl(var(--green))" },
-            { label: "Pending",       value: `$${pendingAmount.toFixed(2)}", accent: "hsl(var(--amber))" },
+            { label: "Pending",       value: `$${pendingAmount.toFixed(2)}`,  accent: "hsl(var(--amber))" },
           ].map(({ label, value, accent }) => (
             <div key={label} className="rounded-xl p-4 card-elevated"
                  style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>

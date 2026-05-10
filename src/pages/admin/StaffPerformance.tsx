@@ -46,7 +46,6 @@ export function StaffPerformance() {
       : 0;
   const totalRevenue = data.reduce((s, d) => s + d.estimated_revenue, 0);
 
-  return (
   const columns: ColDef<TechPerformance>[] = [
     {
       key: "name",
