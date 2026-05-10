@@ -64,7 +64,8 @@ async def create_franchise(
         postal_code=franchise_data.postal_code,
         country=franchise_data.country,
         notes=franchise_data.notes,
-        approval_status="pending",  # Requires superadmin approval
+        approval_status="approved",   # Superadmin-created franchises are pre-approved
+        approved_at=datetime.utcnow(),
         subscription_status="active",
     )
 

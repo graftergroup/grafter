@@ -22,8 +22,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Search, CheckCircle, XCircle, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 const franchiseFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -45,9 +46,17 @@ export function FranchiseManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingFranchise, setEditingFranchise] = useState<FranchiseCardData | null>(
-    null
-  );
+  const [editingFranchise, setEditingFranchise] = useState<FranchiseCardData | null>(null);
+
+  // Invite-manager state (shown after franchise creation)
+  const [inviteStep, setInviteStep] = useState(false);
+  const [newFranchiseId, setNewFranchiseId] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteFirst, setInviteFirst] = useState("");
+  const [inviteLast, setInviteLast] = useState("");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const form = useForm<FranchiseFormData>({
     resolver: zodResolver(franchiseFormSchema),
@@ -121,9 +130,16 @@ export function FranchiseManagement() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         form.reset();
-        setEditingFranchise(null);
-        setIsDialogOpen(false);
+        if (!editingFranchise) {
+          // After creating, offer to invite a franchise manager
+          setNewFranchiseId(data.id);
+          setInviteStep(true);
+        } else {
+          setEditingFranchise(null);
+          setIsDialogOpen(false);
+        }
         fetchFranchises();
       }
     } catch (error) {
@@ -184,7 +200,49 @@ export function FranchiseManagement() {
     setIsDialogOpen(open);
     if (!open) {
       setEditingFranchise(null);
+      setInviteStep(false);
+      setNewFranchiseId(null);
+      setInviteEmail("");
+      setInviteFirst("");
+      setInviteLast("");
+      setInviteLink(null);
+      setInviteCopied(false);
       form.reset();
+    }
+  };
+
+  const handleSendInvite = async () => {
+    setInviteLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/api/staff/invite", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail,
+          first_name: inviteFirst,
+          last_name: inviteLast,
+          role: "franchise_manager",
+          franchise_id: newFranchiseId,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setInviteLink(data.invite_url);
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to generate invite");
+      }
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleCopyInvite = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2000);
     }
   };
 
@@ -214,17 +272,74 @@ export function FranchiseManagement() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingFranchise ? "Edit Franchise" : "Create New Franchise"}
+                  {inviteStep
+                    ? "Invite Franchise Manager"
+                    : editingFranchise
+                    ? "Edit Franchise"
+                    : "Create New Franchise"}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingFranchise
+                  {inviteStep
+                    ? "Franchise created! Optionally invite a manager to log in."
+                    : editingFranchise
                     ? "Update franchise information"
                     : "Add a new franchise to the platform"}
                 </DialogDescription>
               </DialogHeader>
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {inviteStep ? (
+                /* ── Invite manager step ── */
+                <div className="space-y-4 pt-2">
+                  {!inviteLink ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label>First Name</Label>
+                          <Input value={inviteFirst} onChange={(e) => setInviteFirst(e.target.value)} placeholder="Jane" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Last Name</Label>
+                          <Input value={inviteLast} onChange={(e) => setInviteLast(e.target.value)} placeholder="Smith" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Email</Label>
+                        <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="manager@franchise.com" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          onClick={handleSendInvite}
+                          disabled={inviteLoading || !inviteEmail || !inviteFirst || !inviteLast}
+                        >
+                          {inviteLoading ? "Generating..." : "Generate Invite Link"}
+                        </Button>
+                        <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
+                          Skip
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Share this link with <strong>{inviteEmail}</strong>. It expires in 72 hours.
+                      </p>
+                      <div className="flex gap-2">
+                        <Input readOnly value={inviteLink} className="text-xs" />
+                        <Button variant="outline" size="icon" onClick={handleCopyInvite}>
+                          {inviteCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      <Button className="w-full" onClick={() => handleDialogOpenChange(false)}>
+                        Done
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* ── Franchise form ── */
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -325,6 +440,7 @@ export function FranchiseManagement() {
                   </div>
                 </form>
               </Form>
+              )}
             </DialogContent>
           </Dialog>
         </div>

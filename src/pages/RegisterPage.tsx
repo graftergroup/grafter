@@ -39,7 +39,8 @@ export function RegisterPage() {
 
     try {
       await register(formData.email, formData.password, formData.firstName, formData.lastName);
-      navigate("/dashboard");
+      // Self-registered franchises start as pending — redirect to holding page
+      navigate("/pending-approval");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

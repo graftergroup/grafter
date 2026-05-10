@@ -63,6 +63,7 @@ async def register(
                 name=franchise_name,
                 slug=franchise_slug,
                 email=user_data.email,
+                approval_status="pending",  # Self-registered franchises await superadmin approval
             )
             db.add(franchise)
             db.commit()
