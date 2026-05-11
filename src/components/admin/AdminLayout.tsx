@@ -6,30 +6,48 @@ import { Bell, ChevronRight } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  title: string;
+  title?: string;
   description?: string;
 }
 
 const ROUTE_MAP: Record<string, string[]> = {
-  "/admin":                  ["Dashboard"],
-  "/admin/invoices":         ["Revenue", "Invoices"],
-  "/admin/payments":         ["Revenue", "Payments"],
-  "/admin/revenue-reports":  ["Revenue", "Reports"],
-  "/admin/technicians":      ["Team", "Technicians"],
-  "/admin/workload":         ["Team", "Workload"],
-  "/admin/staff":            ["Team", "Staff"],
-  "/admin/performance":      ["Team", "Performance"],
-  "/admin/customers":        ["Customers"],
-  "/admin/bookings":         ["Bookings"],
-  "/admin/vehicles":         ["Vehicles"],
-  "/admin/locations":        ["Locations"],
-  "/admin/settings":         ["Settings"],
+  "/admin":                    ["Dashboard"],
+  "/admin/invoices":           ["Revenue", "Invoices"],
+  "/admin/payments":           ["Revenue", "Payments"],
+  "/admin/revenue-reports":    ["Revenue", "Reports"],
+  "/admin/technicians":        ["Team", "Technicians"],
+  "/admin/workload":           ["Team", "Workload"],
+  "/admin/staff":              ["Team", "Staff"],
+  "/admin/performance":        ["Team", "Performance"],
+  "/admin/customers":          ["Customers"],
+  "/admin/bookings":           ["Bookings"],
+  "/admin/vehicles":           ["Vehicles"],
+  "/admin/locations":          ["Locations"],
+  "/admin/modules":            ["Modules"],
+  "/admin/settings":           ["Settings"],
+  "/admin/hr/employees":       ["HR", "Employees"],
+  "/admin/hr/calendar":        ["HR", "Calendar"],
+  "/admin/hr/rotas":           ["HR", "Rotas & Shifts"],
+  "/admin/hr/documents":       ["HR", "Documents"],
+  "/admin/hr/performance":     ["HR", "Performance"],
+  "/admin/hr/expenses":        ["HR", "Expenses"],
+  "/admin/hr/payroll":         ["HR", "Payroll"],
+  "/admin/hr/recruitment":     ["HR", "Recruitment"],
 };
 
-function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
+export function AdminLayout({ children, title, description }: AdminLayoutProps) {
   const { user } = useAuth();
   const location = useLocation();
-  const crumbs = ROUTE_MAP[location.pathname] ?? [title];
+
+  // Dynamic crumbs: prefer ROUTE_MAP, fall back to title, then path segments
+  const crumbs = (() => {
+    if (ROUTE_MAP[location.pathname]) return ROUTE_MAP[location.pathname];
+    // employee detail e.g. /admin/hr/employees/:id
+    if (location.pathname.startsWith("/admin/hr/employees/")) return ["HR", "Employees", title ?? "Employee"];
+    if (location.pathname.startsWith("/admin/staff/")) return ["Team", "Staff", title ?? "Staff Member"];
+    if (location.pathname.startsWith("/admin/invoices/")) return ["Revenue", "Invoice"];
+    return title ? [title] : ["Admin"];
+  })();
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -37,7 +55,13 @@ function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="topbar-glass h-14 flex-shrink-0 flex items-center justify-between px-6 z-10">
+        <header
+          className="h-14 flex-shrink-0 flex items-center justify-between px-6 z-10"
+          style={{
+            background: "hsl(var(--sidebar-bg))",
+            borderBottom: "1px solid hsl(var(--sidebar-border))",
+          }}
+        >
           <nav className="flex items-center gap-1.5 text-sm">
             {crumbs.map((crumb, i) => (
               <span key={crumb} className="flex items-center gap-1.5">
@@ -83,7 +107,7 @@ function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
                 >
                   {user.first_name?.[0]}{user.last_name?.[0]}
                 </div>
-                <div className="hidden sm:block text-right leading-tight">
+                <div className="hidden sm:block leading-tight">
                   <p className="text-xs font-medium text-foreground">
                     {user.first_name} {user.last_name}
                   </p>
@@ -113,8 +137,4 @@ function AdminLayoutInner({ children, title, description }: AdminLayoutProps) {
       </div>
     </div>
   );
-}
-
-export function AdminLayout(props: AdminLayoutProps) {
-  return <AdminLayoutInner {...props} />;
 }
