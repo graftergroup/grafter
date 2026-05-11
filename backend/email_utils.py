@@ -8,10 +8,11 @@ from email.mime.text import MIMEText
 from typing import Optional
 
 
-def _get_smtp_config() -> dict:
+def _get_smtp_config(purpose: Optional[str] = None) -> dict:
     """
-    Load SMTP config — DB takes priority over env vars.
-    Uses a fresh DB connection to avoid circular imports.
+    Load SMTP config for a given purpose slug.
+    Priority: email_purpose_assignments → email_accounts → platform_settings → env vars.
+    Falls back to the global SMTP platform settings if no account is assigned.
     """
     cfg = {
         "host":       os.environ.get("SMTP_HOST", ""),
@@ -22,12 +23,32 @@ def _get_smtp_config() -> dict:
         "from_name":  os.environ.get("SMTP_FROM_NAME", "Grafter"),
     }
 
-    # Override with DB values if available
     try:
         from backend.db import SessionLocal
-        from backend.models import PlatformSetting
+        from backend.models import PlatformSetting, EmailAccount, EmailPurposeAssignment
         db = SessionLocal()
         try:
+            # 1. Try to resolve by purpose slug → linked email account
+            if purpose:
+                assignment = db.query(EmailPurposeAssignment).filter(
+                    EmailPurposeAssignment.purpose == purpose
+                ).first()
+                if assignment and assignment.account_id:
+                    acc = db.query(EmailAccount).filter(
+                        EmailAccount.id == assignment.account_id,
+                        EmailAccount.is_active == True,
+                    ).first()
+                    if acc and acc.smtp_host and acc.smtp_username and acc.smtp_password:
+                        return {
+                            "host":       acc.smtp_host,
+                            "port":       acc.smtp_port,
+                            "username":   acc.smtp_username,
+                            "password":   acc.smtp_password,
+                            "from_email": acc.from_email or acc.smtp_username,
+                            "from_name":  acc.from_name or "Grafter",
+                        }
+
+            # 2. Fall back to legacy global platform_settings SMTP config
             rows = db.query(PlatformSetting).filter(
                 PlatformSetting.key.in_([
                     "smtp_host", "smtp_port", "smtp_username",
@@ -54,12 +75,14 @@ def send_email(
     subject: str,
     html_body: str,
     text_body: Optional[str] = None,
+    purpose: Optional[str] = None,
 ) -> bool:
     """
     Send a transactional email via SMTP.
     Returns True on success, False on failure (logs error, never raises).
+    If purpose is provided, the matching email account is used.
     """
-    cfg = _get_smtp_config()
+    cfg = _get_smtp_config(purpose=purpose)
     if not cfg["host"] or not cfg["username"] or not cfg["password"]:
         print(f"[email] SMTP not configured — skipping send to {to_email}")
         return False
@@ -190,4 +213,4 @@ This link expires in {expires_hours} hours.
 If you weren't expecting this invitation, you can safely ignore this email.
 """
 
-    return send_email(to_email, subject, html, text)
+    return send_email(to_email, subject, html, text, purpose="staff_invitation")

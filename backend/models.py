@@ -143,6 +143,40 @@ class User(Base):
     permissions = relationship("UserPermission", foreign_keys="UserPermission.user_id", back_populates="user", cascade="all, delete-orphan")
 
 
+class EmailAccount(Base):
+    """Named SMTP email account for sending transactional emails."""
+
+    __tablename__ = "email_accounts"
+
+    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name          = Column(String(100), nullable=False)
+    smtp_host     = Column(String(255), nullable=False, default="")
+    smtp_port     = Column(Integer, default=587, nullable=False)
+    smtp_username = Column(String(255), nullable=False, default="")
+    smtp_password = Column(Text, nullable=True)
+    from_email    = Column(String(255), nullable=False, default="")
+    from_name     = Column(String(100), nullable=False, default="Grafter")
+    is_active     = Column(Boolean, default=True, nullable=False)
+    created_at    = Column(DateTime, default=datetime.utcnow)
+    updated_at    = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    assignments   = relationship("EmailPurposeAssignment", back_populates="account")
+
+
+class EmailPurposeAssignment(Base):
+    """Maps a named email purpose to a specific EmailAccount."""
+
+    __tablename__ = "email_purpose_assignments"
+
+    purpose     = Column(String(50), primary_key=True)
+    label       = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=True)
+    account_id  = Column(UUID(as_uuid=True), ForeignKey("email_accounts.id", ondelete="SET NULL"), nullable=True)
+    updated_at  = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    account     = relationship("EmailAccount", back_populates="assignments")
+
+
 class PlatformSetting(Base):
     """Global platform configuration key/value store."""
 

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.dependencies import get_superadmin_user, get_auth_user
-from backend.models import User, PlatformSetting, Franchise, UserRole
+from backend.models import User, PlatformSetting, Franchise, UserRole, EmailAccount, EmailPurposeAssignment
 
 router = APIRouter(prefix="/superadmin/settings", tags=["superadmin-settings"])
 franchise_settings_router = APIRouter(prefix="/franchise", tags=["franchise-settings"])
@@ -232,3 +232,232 @@ async def test_smtp(
         raise HTTPException(status_code=400, detail=f"Could not connect to {host}:{port}. Check the host and port.")
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"SMTP error: {str(exc)}")
+
+
+# ─── Email Accounts CRUD ──────────────────────────────────────────────────────
+
+class EmailAccountResponse(BaseModel):
+    id: str
+    name: str
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    from_email: str
+    from_name: str
+    is_active: bool
+    password_set: bool
+
+    class Config:
+        from_attributes = True
+
+class EmailAccountCreate(BaseModel):
+    name: str
+    smtp_host: str
+    smtp_port: int = 587
+    smtp_username: str
+    smtp_password: Optional[str] = None
+    from_email: str
+    from_name: str = "Grafter"
+    is_active: bool = True
+
+class EmailAccountUpdate(BaseModel):
+    name: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    from_email: Optional[str] = None
+    from_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class EmailAccountTestRequest(BaseModel):
+    to_email: str
+
+class PurposeAssignmentResponse(BaseModel):
+    purpose: str
+    label: str
+    description: Optional[str] = None
+    account_id: Optional[str] = None
+    account_name: Optional[str] = None
+
+class PurposeAssignmentUpdate(BaseModel):
+    account_id: Optional[str] = None
+
+
+def _account_to_response(acc: EmailAccount) -> EmailAccountResponse:
+    return EmailAccountResponse(
+        id=str(acc.id),
+        name=acc.name,
+        smtp_host=acc.smtp_host,
+        smtp_port=acc.smtp_port,
+        smtp_username=acc.smtp_username,
+        from_email=acc.from_email,
+        from_name=acc.from_name,
+        is_active=acc.is_active,
+        password_set=bool(acc.smtp_password),
+    )
+
+
+@router.get("/email-accounts", response_model=list[EmailAccountResponse])
+async def list_email_accounts(
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    accounts = db.query(EmailAccount).order_by(EmailAccount.name).all()
+    return [_account_to_response(a) for a in accounts]
+
+
+@router.post("/email-accounts", response_model=EmailAccountResponse)
+async def create_email_account(
+    data: EmailAccountCreate,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    acc = EmailAccount(
+        name=data.name,
+        smtp_host=data.smtp_host,
+        smtp_port=data.smtp_port,
+        smtp_username=data.smtp_username,
+        smtp_password=data.smtp_password,
+        from_email=data.from_email,
+        from_name=data.from_name,
+        is_active=data.is_active,
+    )
+    db.add(acc)
+    db.commit()
+    db.refresh(acc)
+    return _account_to_response(acc)
+
+
+@router.put("/email-accounts/{account_id}", response_model=EmailAccountResponse)
+async def update_email_account(
+    account_id: str,
+    data: EmailAccountUpdate,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    acc = db.query(EmailAccount).filter(EmailAccount.id == account_id).first()
+    if not acc:
+        raise HTTPException(status_code=404, detail="Email account not found")
+
+    if data.name is not None:         acc.name = data.name
+    if data.smtp_host is not None:    acc.smtp_host = data.smtp_host
+    if data.smtp_port is not None:    acc.smtp_port = data.smtp_port
+    if data.smtp_username is not None: acc.smtp_username = data.smtp_username
+    if data.smtp_password is not None: acc.smtp_password = data.smtp_password
+    if data.from_email is not None:   acc.from_email = data.from_email
+    if data.from_name is not None:    acc.from_name = data.from_name
+    if data.is_active is not None:    acc.is_active = data.is_active
+
+    db.commit()
+    db.refresh(acc)
+    return _account_to_response(acc)
+
+
+@router.delete("/email-accounts/{account_id}")
+async def delete_email_account(
+    account_id: str,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    acc = db.query(EmailAccount).filter(EmailAccount.id == account_id).first()
+    if not acc:
+        raise HTTPException(status_code=404, detail="Email account not found")
+    db.delete(acc)
+    db.commit()
+    return {"success": True}
+
+
+@router.post("/email-accounts/{account_id}/test")
+async def test_email_account(
+    account_id: str,
+    data: EmailAccountTestRequest,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    acc = db.query(EmailAccount).filter(EmailAccount.id == account_id).first()
+    if not acc:
+        raise HTTPException(status_code=404, detail="Email account not found")
+
+    if not acc.smtp_host or not acc.smtp_username or not acc.smtp_password:
+        raise HTTPException(status_code=400, detail="Account is not fully configured (host, username, and password required).")
+
+    try:
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Grafter Test — {acc.name}"
+        msg["From"] = f"{acc.from_name} <{acc.from_email}>"
+        msg["To"] = data.to_email
+        msg.attach(MIMEText(
+            f"<p>Test email from account <strong>{acc.name}</strong> via Grafter. SMTP is configured correctly.</p>",
+            "html",
+        ))
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(acc.smtp_host, acc.smtp_port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(acc.smtp_username, acc.smtp_password)
+            server.sendmail(acc.from_email, data.to_email, msg.as_string())
+
+        return {"success": True, "message": f"Test email sent to {data.to_email}"}
+
+    except smtplib.SMTPAuthenticationError:
+        raise HTTPException(status_code=400, detail="Authentication failed. Check username/password.")
+    except smtplib.SMTPConnectError:
+        raise HTTPException(status_code=400, detail=f"Could not connect to {acc.smtp_host}:{acc.smtp_port}.")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"SMTP error: {str(exc)}")
+
+
+# ─── Purpose Assignments ──────────────────────────────────────────────────────
+
+@router.get("/email-purposes", response_model=list[PurposeAssignmentResponse])
+async def list_email_purposes(
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(EmailPurposeAssignment).all()
+    result = []
+    for row in rows:
+        result.append(PurposeAssignmentResponse(
+            purpose=row.purpose,
+            label=row.label,
+            description=row.description,
+            account_id=str(row.account_id) if row.account_id else None,
+            account_name=row.account.name if row.account else None,
+        ))
+    return result
+
+
+@router.put("/email-purposes/{purpose}", response_model=PurposeAssignmentResponse)
+async def update_email_purpose(
+    purpose: str,
+    data: PurposeAssignmentUpdate,
+    user: User = Depends(get_superadmin_user),
+    db: Session = Depends(get_db),
+):
+    row = db.query(EmailPurposeAssignment).filter(EmailPurposeAssignment.purpose == purpose).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Purpose not found")
+
+    if data.account_id is not None:
+        if data.account_id == "":
+            row.account_id = None
+        else:
+            acc = db.query(EmailAccount).filter(EmailAccount.id == data.account_id).first()
+            if not acc:
+                raise HTTPException(status_code=404, detail="Email account not found")
+            row.account_id = acc.id
+
+    db.commit()
+    db.refresh(row)
+    return PurposeAssignmentResponse(
+        purpose=row.purpose,
+        label=row.label,
+        description=row.description,
+        account_id=str(row.account_id) if row.account_id else None,
+        account_name=row.account.name if row.account else None,
+    )

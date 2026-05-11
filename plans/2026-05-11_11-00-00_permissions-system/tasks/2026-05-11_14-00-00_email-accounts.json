@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "content": "[db] migrate email_accounts + email_purpose_assignments tables",
+    "status": "pending"
+  },
+  {
+    "id": "2",
+    "content": "[backend] EmailAccount model + full CRUD routes + purpose assignment routes",
+    "status": "pending"
+  },
+  {
+    "id": "3",
+    "content": "[backend] email_utils.py — resolve account by purpose before send",
+    "status": "pending"
+  },
+  {
+    "id": "4",
+    "content": "[frontend] SuperadminSettings — replace single SMTP with multi-account UI + purpose assignments",
+    "status": "pending"
+  }
+]

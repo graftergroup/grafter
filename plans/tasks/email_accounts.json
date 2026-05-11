@@ -1,0 +1,22 @@
+[
+  {
+    "content": "Add email account CRUD + purpose assignment routes to routes_settings.py",
+    "id": "email-1",
+    "status": "completed"
+  },
+  {
+    "content": "Update email_utils.py to resolve account by purpose slug",
+    "id": "email-2",
+    "status": "completed"
+  },
+  {
+    "content": "Rewrite SuperadminSettings.tsx with multi-account email UI",
+    "id": "email-3",
+    "status": "in_progress"
+  },
+  {
+    "content": "Wire up routes in app.py / routes.py, verify build clean",
+    "id": "email-4",
+    "status": "pending"
+  }
+]
