@@ -78,7 +78,6 @@ const TEAM_MENU_HR: SidebarItem = {
     { label: "Expenses",       href: "/admin/hr/expenses",    icon: Receipt       },
     { label: "Payroll",        href: "/admin/hr/payroll",     icon: Banknote      },
     { label: "Recruitment",    href: "/admin/hr/recruitment", icon: Megaphone     },
-    { label: "Staff Accounts", href: "/admin/staff",          icon: Users         },
   ],
 };
 
