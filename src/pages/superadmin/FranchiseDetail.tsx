@@ -93,10 +93,10 @@ interface FranchiseModuleEntry {
   module_id: string;
   module_name: string;
   module_description?: string;
+  module_slug: string;
   status: "active" | "pending" | "inactive" | "rejected";
   custom_price: number | null;
   effective_price: number;
-  monthly_price: number;
   requested_at?: string;
   activated_at?: string;
 }
@@ -903,9 +903,9 @@ export function FranchiseDetail() {
                           {/* Price row */}
                           <div className="mt-3 flex items-center gap-3 flex-wrap">
                             <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-                              <span>Default price:</span>
+                              <span>Effective price:</span>
                               <span className="font-mono font-semibold text-foreground">
-                                £{fm.monthly_price.toFixed(2)}/mo
+                                £{(fm.effective_price ?? 0).toFixed(2)}/mo
                               </span>
                             </div>
                             {/* Custom price input */}
@@ -919,7 +919,7 @@ export function FranchiseDetail() {
                                   type="number"
                                   min="0"
                                   step="0.01"
-                                  placeholder={String(fm.monthly_price)}
+                                  placeholder={String(fm.effective_price ?? "")}
                                   value={customPriceVal}
                                   onChange={(e) =>
                                     setFmCustomPrices((prev) => ({
