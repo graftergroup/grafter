@@ -237,7 +237,7 @@ async def get_franchise_stats(
         Booking.franchise_id == franchise_id
     ).scalar() or 0
 
-    total_revenue = db.query(func.sum(Invoice.total_amount)).filter(
+    total_revenue = db.query(func.sum(Invoice.amount)).filter(
         Invoice.franchise_id == franchise_id
     ).scalar() or 0
 
@@ -274,7 +274,7 @@ async def get_platform_analytics(
 
     total_bookings = db.query(func.count(Booking.id)).scalar() or 0
 
-    total_revenue = db.query(func.sum(Invoice.total_amount)).scalar() or 0
+    total_revenue = db.query(func.sum(Invoice.amount)).scalar() or 0
 
     total_jobs = db.query(func.count(Job.id)).scalar() or 0
 
@@ -283,7 +283,7 @@ async def get_platform_analytics(
         Franchise.id,
         Franchise.name,
         func.count(User.id).label("staff_count"),
-        func.sum(Invoice.total_amount).label("revenue"),
+        func.sum(Invoice.amount).label("revenue"),
     ).outerjoin(User).outerjoin(Invoice).group_by(Franchise.id).all()
 
     franchises_breakdown = [
@@ -360,7 +360,7 @@ async def generate_billing_records(
         if existing:
             continue
 
-        gross = db.query(func.sum(Invoice.total)).filter(
+        gross = db.query(func.sum(Invoice.amount)).filter(
             Invoice.franchise_id == franchise.id,
             Invoice.issued_date >= body.period_start,
             Invoice.issued_date < body.period_end,

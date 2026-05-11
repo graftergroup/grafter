@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Megaphone, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Megaphone, Plus, Pencil, Trash2 } from "lucide-react";
 
 interface Posting {
   id: string;
@@ -29,7 +29,7 @@ interface Posting {
 const EMP_TYPES = ["full_time", "part_time", "casual"];
 const STATUSES = ["draft", "open", "closed"];
 
-const STATUS_COLORS: Record<string, "green" | "amber" | "red" | "default"> = {
+const STATUS_COLORS: Record<string, string> = {
   open: "green",
   draft: "amber",
   closed: "red",
@@ -139,14 +139,15 @@ function RecruitmentContent() {
   const columns: ColDef<Posting>[] = [
     {
       key: "title",
-      header: "Job Title",
+      label: "Job Title",
+      sortable: true,
       render: (p) => <span className="font-medium">{p.title}</span>,
     },
-    { key: "employment_type", header: "Type", render: (p) => fmtType(p.employment_type) },
-    { key: "location", header: "Location", render: (p) => p.location ?? "—" },
+    { key: "employment_type", label: "Type", render: (p) => fmtType(p.employment_type) },
+    { key: "location", label: "Location", render: (p) => p.location ?? "—" },
     {
       key: "salary_min",
-      header: "Salary",
+      label: "Salary",
       render: (p) => {
         if (!p.salary_min && !p.salary_max) return "—";
         if (p.salary_min && p.salary_max) return `£${p.salary_min.toLocaleString()} – £${p.salary_max.toLocaleString()}`;
@@ -155,14 +156,15 @@ function RecruitmentContent() {
     },
     {
       key: "status",
-      header: "Status",
-      render: (p) => <StatusChip status={p.status} color={STATUS_COLORS[p.status] ?? "default"} />,
+      label: "Status",
+      render: (p) => <StatusChip value={p.status} />,
     },
-    { key: "posted_at", header: "Posted", render: (p) => fmt(p.posted_at) },
-    { key: "closes_at", header: "Closes", render: (p) => fmt(p.closes_at) },
+    { key: "posted_at", label: "Posted", sortable: true, render: (p) => fmt(p.posted_at) },
+    { key: "closes_at", label: "Closes", render: (p) => fmt(p.closes_at) },
     {
       key: "id",
-      header: "",
+      label: "",
+      align: "right",
       render: (p) => (
         <div className="flex items-center gap-2 justify-end">
           <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
