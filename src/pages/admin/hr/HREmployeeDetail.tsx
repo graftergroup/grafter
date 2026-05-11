@@ -19,7 +19,7 @@ import { PERMISSION_SLUGS } from "@/types";
 import {
   ArrowLeft, User, CalendarDays, FileText, Star, Receipt,
   CheckCircle, XCircle, Plus, Clock, Pencil, ShieldCheck, ShieldOff, Save, X, ShieldAlert,
-  Upload, Trash2, AlertTriangle, AlertCircle, Download,
+  Upload, Trash2, AlertTriangle, AlertCircle, Download, Eye, ExternalLink,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -106,6 +106,7 @@ export default function HREmployeeDetail() {
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docSaving, setDocSaving] = useState(false);
   const [docDeleteId, setDocDeleteId] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocEntry | null>(null);
 
   // Edit profile state
   const [editing, setEditing] = useState(false);
@@ -283,13 +284,13 @@ export default function HREmployeeDetail() {
 
   const docColumns: ColDef<DocEntry>[] = [
     { key: "title", label: "Document", sortable: true, render: (d) => (
-      <div>
-        <span className="font-medium text-sm">{d.title}</span>
+      <button className="text-left group" onClick={() => setPreviewDoc(d)}>
+        <span className="font-medium text-sm group-hover:text-amber-500 transition-colors">{d.title}</span>
         {d.file_name && <p className="text-xs text-muted-foreground truncate max-w-[180px]">{d.file_name}</p>}
-      </div>
+      </button>
     )},
     { key: "doc_type", label: "Type", render: (d) => (
-      <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ background: "hsl(var(--muted-foreground)/0.1)", color: "hsl(var(--muted-foreground))" }}>{d.doc_type}</span>
+      <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ background: "hsl(var(--muted-foreground)/0.1)", color: "hsl(var(--muted-foreground))" }}>{d.doc_type.replace(/_/g, " ")}</span>
     )},
     { key: "expiry_date", label: "Expiry", sortable: true, render: (d) => {
       if (!d.expiry_date) return <span className="text-xs text-muted-foreground">—</span>;
@@ -313,14 +314,21 @@ export default function HREmployeeDetail() {
     { key: "uploaded_by", label: "By", render: (d) => <span className="text-sm text-muted-foreground">{d.uploaded_by ?? "—"}</span> },
     { key: "id", label: "", render: (d) => (
       <div className="flex items-center gap-1 justify-end">
+        <button onClick={() => setPreviewDoc(d)}
+          className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          title="Preview">
+          <Eye className="w-3.5 h-3.5" />
+        </button>
         {d.file_url && (
           <a href={d.file_url} target="_blank" rel="noreferrer"
-            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Download">
             <Download className="w-3.5 h-3.5" />
           </a>
         )}
         <button onClick={() => setDocDeleteId(d.id)}
-          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+          title="Delete">
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -740,6 +748,129 @@ export default function HREmployeeDetail() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Document preview */}
+        {previewDoc && (() => {
+          const ext = (previewDoc.file_name ?? previewDoc.file_url ?? "").split(".").pop()?.toLowerCase() ?? "";
+          const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext);
+          const isPdf = ext === "pdf";
+          const hasFile = !!previewDoc.file_url;
+
+          return (
+            <Dialog open onOpenChange={() => setPreviewDoc(null)}>
+              <DialogContent
+                className="max-w-4xl w-full p-0 overflow-hidden"
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.7)" }}
+              >
+                {/* Header bar */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">{previewDoc.title}</p>
+                      {previewDoc.file_name && (
+                        <p className="text-xs text-muted-foreground truncate">{previewDoc.file_name}</p>
+                      )}
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded capitalize shrink-0"
+                      style={{ background: "hsl(var(--muted-foreground)/0.1)", color: "hsl(var(--muted-foreground))" }}>
+                      {previewDoc.doc_type.replace(/_/g, " ")}
+                    </span>
+                    {previewDoc.expiry_status && previewDoc.expiry_status !== "ok" && (
+                      <span className="text-xs px-2 py-0.5 rounded font-medium shrink-0 flex items-center gap-1"
+                        style={{
+                          background: `hsl(var(${previewDoc.expiry_status === "expired" || previewDoc.expiry_status === "critical" ? "--red" : "--amber"})/0.1)`,
+                          color: `hsl(var(${previewDoc.expiry_status === "expired" || previewDoc.expiry_status === "critical" ? "--red" : "--amber"}))`,
+                        }}>
+                        <AlertTriangle className="w-3 h-3" />
+                        {previewDoc.expiry_status === "expired"
+                          ? `Expired ${Math.abs(previewDoc.days_until_expiry ?? 0)}d ago`
+                          : `${previewDoc.days_until_expiry}d left`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    {hasFile && (
+                      <a href={previewDoc.file_url} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                        <ExternalLink className="w-3 h-3" /> Open
+                      </a>
+                    )}
+                    {hasFile && (
+                      <a href={previewDoc.file_url} download={previewDoc.file_name ?? previewDoc.title}
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                        <Download className="w-3 h-3" /> Download
+                      </a>
+                    )}
+                    <button onClick={() => setPreviewDoc(null)}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preview area */}
+                <div className="w-full" style={{ height: "70vh" }}>
+                  {!hasFile ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                      <FileText className="w-12 h-12 opacity-20" />
+                      <p className="text-sm">No file attached to this document.</p>
+                      {previewDoc.notes && (
+                        <p className="text-sm text-center max-w-sm px-6">{previewDoc.notes}</p>
+                      )}
+                    </div>
+                  ) : isPdf ? (
+                    <iframe
+                      src={previewDoc.file_url}
+                      className="w-full h-full"
+                      style={{ border: "none" }}
+                      title={previewDoc.title}
+                    />
+                  ) : isImage ? (
+                    <div className="flex items-center justify-center h-full p-6"
+                      style={{ background: "hsl(var(--background))" }}>
+                      <img
+                        src={previewDoc.file_url}
+                        alt={previewDoc.title}
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-4"
+                      style={{ background: "hsl(var(--background))" }}>
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                        style={{ background: "hsl(var(--amber)/0.1)", border: "1px solid hsl(var(--amber)/0.25)" }}>
+                        <FileText className="w-8 h-8 text-amber-500" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium text-foreground">{previewDoc.file_name ?? previewDoc.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {previewDoc.file_size ? `${(previewDoc.file_size / 1024).toFixed(0)} KB · ` : ""}
+                          {ext.toUpperCase()} file
+                        </p>
+                        {previewDoc.notes && (
+                          <p className="text-sm text-muted-foreground mt-3 max-w-xs">{previewDoc.notes}</p>
+                        )}
+                      </div>
+                      <a href={previewDoc.file_url} download={previewDoc.file_name ?? previewDoc.title}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        style={{ background: "hsl(var(--amber))", color: "hsl(222 25% 8%)" }}>
+                        <Download className="w-4 h-4" /> Download to view
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer with notes */}
+                {previewDoc.notes && (hasFile && (isPdf || isImage)) && (
+                  <div className="px-5 py-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground"><span className="font-medium">Notes:</span> {previewDoc.notes}</p>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          );
+        })()}
       </ModuleGate>
     </AdminLayout>
   );
