@@ -24,6 +24,7 @@ import { FranchiseDetail } from "@/pages/superadmin/FranchiseDetail";
 import { AdminStaffDetail, SuperadminStaffDetail } from "@/pages/shared/StaffDetail";
 import { InvoiceDetail } from "@/pages/admin/InvoiceDetail";
 import { ModuleManagement } from "@/pages/superadmin/ModuleManagement";
+import { SuperadminSettings } from "@/pages/superadmin/SuperadminSettings";
 import ModuleCatalogue from "@/pages/admin/ModuleCatalogue";
 import HREmployees from "@/pages/admin/hr/HREmployees";
 import HREmployeeDetail from "@/pages/admin/hr/HREmployeeDetail";
@@ -162,6 +163,7 @@ function AppRoutes() {
         <Route path="/superadmin/staff/:id" element={<SuperadminStaffDetail />} />
         <Route path="/superadmin/billing" element={<BillingManagement />} />
         <Route path="/superadmin/modules" element={<ModuleManagement />} />
+        <Route path="/superadmin/settings" element={<SuperadminSettings />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" />} />

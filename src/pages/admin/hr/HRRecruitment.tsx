@@ -219,7 +219,7 @@ function RecruitmentContent() {
 
         {/* Create / Edit dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Job Posting" : "Post a New Job"}</DialogTitle>
             </DialogHeader>
@@ -292,7 +292,7 @@ function RecruitmentContent() {
 
         {/* Delete confirmation dialog */}
         <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-sm" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
             <DialogHeader>
               <DialogTitle>Delete Job Posting?</DialogTitle>
             </DialogHeader>

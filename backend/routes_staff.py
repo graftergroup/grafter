@@ -10,6 +10,7 @@ from backend.auth import hash_password
 from backend.dependencies import get_auth_user, get_superadmin_user, get_franchisee_manager, get_effective_permissions
 from backend.models import User, UserRole, Franchise, UserPermission
 from backend.schemas import StaffCreate, StaffUpdate, StaffResponse, StaffInviteRequest, InviteTokenResponse, PermissionEntry, PermissionUpdate
+from backend.email_utils import send_staff_invite
 
 router = APIRouter(prefix="/staff", tags=["staff"])
 
@@ -276,6 +277,16 @@ async def invite_staff(
 
     base_url = str(request.base_url).rstrip("/")
     invite_url = f"{base_url}/accept-invite?token={token}"
+
+    # Send invitation email (non-blocking — failure doesn't break the response)
+    franchise = db.query(Franchise).filter(Franchise.id == franchise_id).first()
+    franchise_name = franchise.name if franchise else "Grafter"
+    send_staff_invite(
+        to_email=invite_data.email,
+        first_name=invite_data.first_name,
+        invite_url=invite_url,
+        franchise_name=franchise_name,
+    )
 
     return InviteTokenResponse(
         invite_token=token,

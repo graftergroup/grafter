@@ -190,7 +190,7 @@ export function LocationManagement() {
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Location" : "Add Location"}</DialogTitle>
           </DialogHeader>

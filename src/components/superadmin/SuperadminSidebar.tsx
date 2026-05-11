@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Building2, Users, LogOut, CreditCard, LayoutGrid, Shield, Puzzle } from "lucide-react";
+import { Building2, Users, LogOut, CreditCard, LayoutGrid, Shield, Puzzle, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/superadmin/staff",      label: "All Staff",  icon: Users      },
   { href: "/superadmin/billing",    label: "Billing",    icon: CreditCard },
   { href: "/superadmin/modules",    label: "Modules",    icon: Puzzle     },
+  { href: "/superadmin/settings",   label: "Settings",   icon: Settings   },
 ];
 
 export function SuperadminSidebar() {

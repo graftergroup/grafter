@@ -1141,7 +1141,7 @@ export function FranchiseDetail() {
 
       {/* ── Invite staff dialog ──────────────────────────────────────── */}
       <Dialog open={inviteOpen} onOpenChange={(open) => { if (!open) resetInvite(); else setInviteOpen(true); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
           <DialogHeader>
             <DialogTitle>Invite Staff Member</DialogTitle>
           </DialogHeader>

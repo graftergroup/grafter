@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "content": "[db] migrate platform_settings table (key/value encrypted store)",
+    "status": "pending"
+  },
+  {
+    "id": "2",
+    "content": "[backend] models + routes_superadmin GET/PUT /settings + email_utils reads DB",
+    "status": "pending"
+  },
+  {
+    "id": "3",
+    "content": "[frontend] SuperadminSettings page — SMTP form + test connection",
+    "status": "pending"
+  },
+  {
+    "id": "4",
+    "content": "[frontend] Sidebar Settings nav item + App.tsx route + fix invite dialog display",
+    "status": "pending"
+  }
+]

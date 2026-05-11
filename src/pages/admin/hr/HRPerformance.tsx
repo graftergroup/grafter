@@ -162,7 +162,7 @@ export default function HRPerformance() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
             <DialogHeader><DialogTitle>New Performance Review</DialogTitle></DialogHeader>
             <div className="space-y-4 mt-2">
               <div className="grid grid-cols-2 gap-3">

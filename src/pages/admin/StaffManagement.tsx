@@ -239,7 +239,8 @@ export function StaffManagement() {
             <DialogTrigger asChild>
               <Button variant="outline"><Mail className="w-4 h-4 mr-2" />Invite Staff</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md"
+              style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
               <DialogHeader>
                 <DialogTitle>Invite Staff Member</DialogTitle>
               </DialogHeader>

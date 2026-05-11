@@ -219,7 +219,7 @@ export default function HRRotas() {
 
         {/* Shift dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-sm">
+          <DialogContent className="sm:max-w-sm" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
             <DialogHeader>
               <DialogTitle>{editShift ? "Edit Shift" : "Add Shift"}</DialogTitle>
             </DialogHeader>

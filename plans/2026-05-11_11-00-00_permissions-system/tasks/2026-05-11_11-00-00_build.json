@@ -22,11 +22,11 @@
   {
     "content": "[frontend] types.ts + usePermissions hook + App.tsx PermissionsProvider wrap",
     "id": "5",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "[frontend] Sidebar permissionSlug filtering + HREmployeeDetail + StaffManagement permissions editor UI",
     "id": "6",
-    "status": "pending"
+    "status": "completed"
   }
 ]

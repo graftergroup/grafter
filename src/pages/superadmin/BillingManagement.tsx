@@ -282,7 +282,7 @@ export function BillingManagement() {
             <DialogTrigger asChild>
               <Button><RefreshCw className="w-4 h-4 mr-2" />Generate Billing Period</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
               <DialogHeader><DialogTitle>Generate Billing Records</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">

@@ -138,7 +138,7 @@ export default function HRDocuments() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
             <DialogHeader><DialogTitle>Add Document</DialogTitle></DialogHeader>
             <div className="space-y-4 mt-2">
               <div className="space-y-1.5">

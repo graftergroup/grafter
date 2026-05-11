@@ -143,6 +143,20 @@ class User(Base):
     permissions = relationship("UserPermission", foreign_keys="UserPermission.user_id", back_populates="user", cascade="all, delete-orphan")
 
 
+class PlatformSetting(Base):
+    """Global platform configuration key/value store."""
+
+    __tablename__ = "platform_settings"
+
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    key         = Column(String(100), nullable=False, unique=True)
+    value       = Column(Text, nullable=True)
+    is_secret   = Column(Boolean, default=False, nullable=False)
+    description = Column(String(255), nullable=True)
+    updated_by  = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    updated_at  = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class UserPermission(Base):
     """Per-user permission overrides for portal areas."""
 

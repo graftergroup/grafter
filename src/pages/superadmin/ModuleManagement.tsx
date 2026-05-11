@@ -379,7 +379,7 @@ export function ModuleManagement() {
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Module" : "New Module"}</DialogTitle>
           </DialogHeader>
@@ -434,7 +434,7 @@ export function ModuleManagement() {
 
       {/* Approve / reject dialog */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
           <DialogHeader>
             <DialogTitle>Review Module Request</DialogTitle>
           </DialogHeader>

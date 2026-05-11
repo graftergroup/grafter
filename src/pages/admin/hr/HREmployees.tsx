@@ -218,7 +218,8 @@ export default function HREmployees() {
 
           {/* Invite dialog */}
           <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) resetInvite(); }}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md"
+              style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Mail className="w-4 h-4" style={{ color: "hsl(var(--amber))" }} />
