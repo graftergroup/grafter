@@ -1,0 +1,22 @@
+[
+  {
+    "content": "Add expiry_date + file_size + file_name columns to employee_documents + run migration",
+    "id": "hrdoc-1",
+    "status": "completed"
+  },
+  {
+    "content": "Update routes_hr.py: upload endpoint (multipart), expiry in create/dict, notifications endpoint",
+    "id": "hrdoc-2",
+    "status": "completed"
+  },
+  {
+    "content": "Update HREmployeeDetail.tsx documents tab: upload dialog + expiry + expiry badge",
+    "id": "hrdoc-3",
+    "status": "completed"
+  },
+  {
+    "content": "Add notification bell to AdminLayout with expiring documents badge + dropdown",
+    "id": "hrdoc-4",
+    "status": "in_progress"
+  }
+]

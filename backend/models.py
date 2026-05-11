@@ -534,6 +534,9 @@ class EmployeeDocument(Base):
     title = Column(String(255), nullable=False)
     doc_type = Column(String(50), nullable=False, default="other")  # contract, id, certificate, other
     file_url = Column(Text, nullable=True)
+    file_name = Column(Text, nullable=True)
+    file_size = Column(Integer, nullable=True)  # bytes
+    expiry_date = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     uploaded_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

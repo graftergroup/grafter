@@ -19,6 +19,7 @@ import { PERMISSION_SLUGS } from "@/types";
 import {
   ArrowLeft, User, CalendarDays, FileText, Star, Receipt,
   CheckCircle, XCircle, Plus, Clock, Pencil, ShieldCheck, ShieldOff, Save, X, ShieldAlert,
+  Upload, Trash2, AlertTriangle, AlertCircle, Download,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -39,6 +40,8 @@ interface ShiftEntry {
 }
 interface DocEntry {
   id: string; title: string; doc_type: string; file_url?: string;
+  file_name?: string; file_size?: number;
+  expiry_date?: string; days_until_expiry?: number; expiry_status?: string;
   notes?: string; uploaded_by?: string; created_at?: string;
 }
 interface ReviewEntry {
@@ -93,6 +96,16 @@ export default function HREmployeeDetail() {
   const [lDays, setLDays] = useState("1");
   const [lReason, setLReason] = useState("");
   const [lSaving, setLSaving] = useState(false);
+
+  // Document upload dialog
+  const [docOpen, setDocOpen] = useState(false);
+  const [docTitle, setDocTitle] = useState("");
+  const [docType, setDocType] = useState("other");
+  const [docExpiry, setDocExpiry] = useState("");
+  const [docNotes, setDocNotes] = useState("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docSaving, setDocSaving] = useState(false);
+  const [docDeleteId, setDocDeleteId] = useState<string | null>(null);
 
   // Edit profile state
   const [editing, setEditing] = useState(false);
@@ -171,6 +184,36 @@ export default function HREmployeeDetail() {
     fetchEmp();
   };
 
+  const handleDocUpload = async () => {
+    if (!id || !docFile) return;
+    setDocSaving(true);
+    const form = new FormData();
+    form.append("employee_id", id);
+    form.append("title", docTitle);
+    form.append("doc_type", docType);
+    if (docExpiry) form.append("expiry_date", docExpiry);
+    if (docNotes) form.append("notes", docNotes);
+    form.append("file", docFile);
+    await fetch("/api/hr/documents/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token()}` },
+      body: form,
+    });
+    setDocSaving(false);
+    setDocOpen(false);
+    setDocTitle(""); setDocType("other"); setDocExpiry(""); setDocNotes(""); setDocFile(null);
+    fetchEmp();
+  };
+
+  const handleDocDelete = async (docId: string) => {
+    await fetch(`/api/hr/documents/${docId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    setDocDeleteId(null);
+    fetchEmp();
+  };
+
   const startEditing = () => {
     if (!emp) return;
     setEditFirst(emp.first_name);
@@ -239,13 +282,49 @@ export default function HREmployeeDetail() {
   ];
 
   const docColumns: ColDef<DocEntry>[] = [
-    { key: "title", label: "Document", sortable: true, render: (d) => <span className="font-medium text-sm">{d.title}</span> },
-    { key: "doc_type", label: "Type", render: (d) => <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ background: "hsl(var(--muted-foreground)/0.1)", color: "hsl(var(--muted-foreground))" }}>{d.doc_type}</span> },
-    { key: "uploaded_by", label: "Uploaded by", render: (d) => <span className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>{d.uploaded_by ?? "—"}</span> },
-    { key: "created_at", label: "Date", sortable: true, render: (d) => <span className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>{d.created_at ? new Date(d.created_at).toLocaleDateString("en-AU") : "—"}</span> },
-    { key: "file_url", label: "", render: (d) => d.file_url ? (
-      <a href={d.file_url} target="_blank" rel="noreferrer" className="text-xs text-amber-500 hover:underline">View</a>
-    ) : null },
+    { key: "title", label: "Document", sortable: true, render: (d) => (
+      <div>
+        <span className="font-medium text-sm">{d.title}</span>
+        {d.file_name && <p className="text-xs text-muted-foreground truncate max-w-[180px]">{d.file_name}</p>}
+      </div>
+    )},
+    { key: "doc_type", label: "Type", render: (d) => (
+      <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ background: "hsl(var(--muted-foreground)/0.1)", color: "hsl(var(--muted-foreground))" }}>{d.doc_type}</span>
+    )},
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (d) => {
+      if (!d.expiry_date) return <span className="text-xs text-muted-foreground">—</span>;
+      const colorMap: Record<string, string> = { expired: "--red", critical: "--amber", warning: "--amber", ok: "--green" };
+      const labelMap: Record<string, string> = {
+        expired: `Expired ${Math.abs(d.days_until_expiry ?? 0)}d ago`,
+        critical: `${d.days_until_expiry}d left`,
+        warning: `${d.days_until_expiry}d left`,
+        ok: new Date(d.expiry_date).toLocaleDateString("en-AU"),
+      };
+      const status = d.expiry_status ?? "ok";
+      const color = colorMap[status] ?? "--muted-foreground";
+      return (
+        <span className="flex items-center gap-1 text-xs font-medium"
+          style={{ color: `hsl(var(${color}))` }}>
+          {(status === "expired" || status === "critical") && <AlertTriangle className="w-3 h-3" />}
+          {labelMap[status]}
+        </span>
+      );
+    }},
+    { key: "uploaded_by", label: "By", render: (d) => <span className="text-sm text-muted-foreground">{d.uploaded_by ?? "—"}</span> },
+    { key: "id", label: "", render: (d) => (
+      <div className="flex items-center gap-1 justify-end">
+        {d.file_url && (
+          <a href={d.file_url} target="_blank" rel="noreferrer"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <Download className="w-3.5 h-3.5" />
+          </a>
+        )}
+        <button onClick={() => setDocDeleteId(d.id)}
+          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    )},
   ];
 
   const reviewColumns: ColDef<ReviewEntry>[] = [
@@ -526,7 +605,23 @@ export default function HREmployeeDetail() {
 
           {/* Documents tab */}
           {activeTab === "documents" && (
-            <DataTable<DocEntry> columns={docColumns} data={emp.documents} rowKey="id" searchPlaceholder="Search documents…" searchKeys={["title", "doc_type"]} emptyText="No documents." />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  {emp.documents.some((d) => d.expiry_status === "expired" || d.expiry_status === "critical") && (
+                    <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                      style={{ background: "hsl(var(--red)/0.1)", color: "hsl(var(--red))", border: "1px solid hsl(var(--red)/0.2)" }}>
+                      <AlertTriangle className="w-3 h-3" />
+                      {emp.documents.filter((d) => d.expiry_status === "expired" || d.expiry_status === "critical").length} document{emp.documents.filter((d) => d.expiry_status === "expired" || d.expiry_status === "critical").length !== 1 ? "s" : ""} need attention
+                    </span>
+                  )}
+                </div>
+                <Button size="sm" onClick={() => setDocOpen(true)} className="gap-1.5">
+                  <Upload className="w-3.5 h-3.5" /> Upload Document
+                </Button>
+              </div>
+              <DataTable<DocEntry> columns={docColumns} data={emp.documents} rowKey="id" searchPlaceholder="Search documents…" searchKeys={["title", "doc_type"]} emptyText="No documents uploaded yet." />
+            </div>
           )}
 
           {/* Reviews tab */}
@@ -566,6 +661,82 @@ export default function HREmployeeDetail() {
                 style={{ background: "hsl(var(--amber))", color: "hsl(222 25% 8%)" }}>
                 {lSaving ? "Saving…" : "Save Leave Request"}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Document upload dialog */}
+        <Dialog open={docOpen} onOpenChange={setDocOpen}>
+          <DialogContent className="sm:max-w-md" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
+            <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="space-y-1.5">
+                <Label>Title</Label>
+                <Input placeholder="e.g. Right to Work, DBS Certificate" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Type</Label>
+                  <select value={docType} onChange={(e) => setDocType(e.target.value)}
+                    className="w-full h-9 rounded-md border px-3 text-sm"
+                    style={{ background: "hsl(var(--background))", borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}>
+                    <option value="contract">Contract</option>
+                    <option value="id">ID / Passport</option>
+                    <option value="certificate">Certificate</option>
+                    <option value="dbs">DBS Check</option>
+                    <option value="right_to_work">Right to Work</option>
+                    <option value="training">Training</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expiry Date <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <Input type="date" value={docExpiry} onChange={(e) => setDocExpiry(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>File</Label>
+                <div
+                  className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors"
+                  style={{ borderColor: docFile ? "hsl(var(--amber)/0.5)" : "hsl(var(--border))", background: docFile ? "hsl(var(--amber)/0.05)" : "transparent" }}
+                  onClick={() => document.getElementById("doc-file-input")?.click()}
+                >
+                  {docFile ? (
+                    <div className="flex items-center justify-center gap-2 text-sm">
+                      <FileText className="w-4 h-4 text-amber-500" />
+                      <span className="font-medium text-foreground">{docFile.name}</span>
+                      <span className="text-muted-foreground">({(docFile.size / 1024).toFixed(0)} KB)</span>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground text-sm">
+                      <Upload className="w-5 h-5 mx-auto mb-1.5 opacity-50" />
+                      Click to select a file
+                    </div>
+                  )}
+                  <input id="doc-file-input" type="file" className="hidden"
+                    onChange={(e) => e.target.files?.[0] && setDocFile(e.target.files[0])} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Input value={docNotes} onChange={(e) => setDocNotes(e.target.value)} placeholder="Any notes about this document" />
+              </div>
+              <Button className="w-full" onClick={handleDocUpload} disabled={docSaving || !docTitle || !docFile}
+                style={{ background: "hsl(var(--amber))", color: "hsl(222 25% 8%)" }}>
+                {docSaving ? "Uploading…" : "Upload Document"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete document confirm */}
+        <Dialog open={!!docDeleteId} onOpenChange={() => setDocDeleteId(null)}>
+          <DialogContent className="sm:max-w-sm" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 24px 64px hsl(0 0% 0% / 0.6)" }}>
+            <DialogHeader><DialogTitle>Delete Document</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">This will permanently remove the document and its file. This cannot be undone.</p>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setDocDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1" onClick={() => docDeleteId && handleDocDelete(docDeleteId)}>Delete</Button>
             </div>
           </DialogContent>
         </Dialog>

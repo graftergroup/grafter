@@ -12,11 +12,11 @@
   {
     "content": "Rewrite SuperadminSettings.tsx with multi-account email UI",
     "id": "email-3",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Wire up routes in app.py / routes.py, verify build clean",
     "id": "email-4",
-    "status": "pending"
+    "status": "completed"
   }
 ]

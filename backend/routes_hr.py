@@ -1,11 +1,15 @@
 """HR module API routes — all scoped to the authenticated user's franchise."""
 
-from datetime import datetime
+import os
+import shutil
+import uuid
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from pydantic import BaseModel
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
@@ -309,15 +313,35 @@ async def delete_shift(
 
 # ─── Documents ───────────────────────────────────────────────────────────────
 
+UPLOAD_DIR = "/tmp/grafter_uploads"
+
 class DocumentCreate(BaseModel):
     employee_id: str
     title: str
     doc_type: str = "other"
     file_url: Optional[str] = None
+    file_name: Optional[str] = None
+    file_size: Optional[int] = None
+    expiry_date: Optional[str] = None   # ISO date string YYYY-MM-DD
     notes: Optional[str] = None
 
 
 def _doc_dict(d: EmployeeDocument) -> dict:
+    # Days until expiry
+    days_until_expiry = None
+    expiry_status = None
+    if d.expiry_date:
+        delta = (d.expiry_date.date() - datetime.utcnow().date()).days
+        days_until_expiry = delta
+        if delta < 0:
+            expiry_status = "expired"
+        elif delta <= 30:
+            expiry_status = "critical"
+        elif delta <= 90:
+            expiry_status = "warning"
+        else:
+            expiry_status = "ok"
+
     return {
         "id": str(d.id),
         "employee_id": str(d.employee_id),
@@ -325,6 +349,11 @@ def _doc_dict(d: EmployeeDocument) -> dict:
         "title": d.title,
         "doc_type": d.doc_type,
         "file_url": d.file_url,
+        "file_name": d.file_name,
+        "file_size": d.file_size,
+        "expiry_date": d.expiry_date.isoformat()[:10] if d.expiry_date else None,
+        "days_until_expiry": days_until_expiry,
+        "expiry_status": expiry_status,
         "notes": d.notes,
         "uploaded_by": _user_name(d.uploaded_by),
         "created_at": d.created_at.isoformat() if d.created_at else None,
@@ -352,12 +381,22 @@ async def create_document(
     user: User = Depends(get_auth_user),
     db: Session = Depends(get_db),
 ):
+    expiry = None
+    if data.expiry_date:
+        try:
+            expiry = datetime.strptime(data.expiry_date, "%Y-%m-%d")
+        except ValueError:
+            pass
+
     d = EmployeeDocument(
         franchise_id=user.franchise_id,
         employee_id=data.employee_id,
         title=data.title,
         doc_type=data.doc_type,
         file_url=data.file_url,
+        file_name=data.file_name,
+        file_size=data.file_size,
+        expiry_date=expiry,
         notes=data.notes,
         uploaded_by_id=user.id,
     )
@@ -365,6 +404,87 @@ async def create_document(
     db.commit()
     db.refresh(d)
     return _doc_dict(d)
+
+
+@hr_router.post("/documents/upload")
+async def upload_document(
+    employee_id: str = Form(...),
+    title: str = Form(...),
+    doc_type: str = Form("other"),
+    expiry_date: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Upload a file and create a document record. File stored on local disk."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    dest_path = os.path.join(UPLOAD_DIR, stored_name)
+
+    with open(dest_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    file_size = os.path.getsize(dest_path)
+    # Serve back via /api/hr/documents/file/<stored_name>
+    file_url = f"/api/hr/documents/file/{stored_name}"
+
+    expiry = None
+    if expiry_date:
+        try:
+            expiry = datetime.strptime(expiry_date, "%Y-%m-%d")
+        except ValueError:
+            pass
+
+    d = EmployeeDocument(
+        franchise_id=user.franchise_id,
+        employee_id=employee_id,
+        title=title,
+        doc_type=doc_type,
+        file_url=file_url,
+        file_name=file.filename,
+        file_size=file_size,
+        expiry_date=expiry,
+        notes=notes,
+        uploaded_by_id=user.id,
+    )
+    db.add(d)
+    db.commit()
+    db.refresh(d)
+    return _doc_dict(d)
+
+
+@hr_router.get("/documents/file/{filename}")
+async def serve_document(filename: str, user: User = Depends(get_auth_user)):
+    """Serve a previously uploaded document file."""
+    from fastapi.responses import FileResponse
+    path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(path) or ".." in filename:
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
+
+
+@hr_router.get("/documents/expiring")
+async def expiring_documents(
+    days: int = Query(90, description="Look-ahead window in days"),
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Return documents expiring within `days` days (including already expired)."""
+    cutoff = datetime.utcnow() + timedelta(days=days)
+    docs = (
+        db.query(EmployeeDocument)
+        .filter(
+            EmployeeDocument.franchise_id == user.franchise_id,
+            EmployeeDocument.expiry_date.isnot(None),
+            EmployeeDocument.expiry_date <= cutoff,
+        )
+        .order_by(EmployeeDocument.expiry_date.asc())
+        .all()
+    )
+    return [_doc_dict(d) for d in docs]
 
 
 @hr_router.delete("/documents/{doc_id}")
@@ -379,6 +499,12 @@ async def delete_document(
     ).first()
     if not d:
         raise HTTPException(status_code=404, detail="Document not found")
+    # Remove file if stored locally
+    if d.file_url and d.file_url.startswith("/api/hr/documents/file/"):
+        fname = d.file_url.split("/")[-1]
+        path = os.path.join(UPLOAD_DIR, fname)
+        if os.path.exists(path):
+            os.remove(path)
     db.delete(d)
     db.commit()
     return {"status": "deleted"}
