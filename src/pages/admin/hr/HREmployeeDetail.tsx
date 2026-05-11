@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useTabContext } from "@/hooks/useTabs";
 import {
   ArrowLeft, User, CalendarDays, FileText, Star, Receipt,
-  CheckCircle, XCircle, Plus, Clock,
+  CheckCircle, XCircle, Plus, Clock, Pencil, ShieldCheck, ShieldOff, Save, X,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -87,6 +90,15 @@ export default function HREmployeeDetail() {
   const [lReason, setLReason] = useState("");
   const [lSaving, setLSaving] = useState(false);
 
+  // Edit profile state
+  const [editing, setEditing] = useState(false);
+  const [editFirst, setEditFirst] = useState("");
+  const [editLast, setEditLast] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [accessSaving, setAccessSaving] = useState(false);
+
   const token = () => localStorage.getItem("access_token");
 
   const fetchEmp = useCallback(async () => {
@@ -123,6 +135,40 @@ export default function HREmployeeDetail() {
     });
     setLSaving(false);
     setLeaveOpen(false);
+    fetchEmp();
+  };
+
+  const startEditing = () => {
+    if (!emp) return;
+    setEditFirst(emp.first_name);
+    setEditLast(emp.last_name);
+    setEditPhone(emp.phone ?? "");
+    setEditRole(emp.role);
+    setEditing(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!id) return;
+    setEditSaving(true);
+    await fetch(`/api/staff/${id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ first_name: editFirst, last_name: editLast, phone: editPhone, role: editRole }),
+    });
+    setEditSaving(false);
+    setEditing(false);
+    fetchEmp();
+  };
+
+  const handleToggleAccess = async () => {
+    if (!emp || !id) return;
+    setAccessSaving(true);
+    await fetch(`/api/staff/${id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !emp.is_active }),
+    });
+    setAccessSaving(false);
     fetchEmp();
   };
 
@@ -234,35 +280,120 @@ export default function HREmployeeDetail() {
           {/* Profile tab */}
           {activeTab === "profile" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="card-elevated rounded-xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Personal Info</h3>
-                {[
-                  ["Full Name", `${emp.first_name} ${emp.last_name}`],
-                  ["Email", emp.email],
-                  ["Phone", emp.phone ?? "—"],
-                  ["Role", emp.role.replace(/_/g, " ")],
-                  ["Staff Type", emp.staff_type ?? "—"],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
-                    <span className="font-medium capitalize">{value}</span>
+              {/* Personal info — editable */}
+              <div className="card-elevated rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Personal Info</h3>
+                  {!editing ? (
+                    <button onClick={startEditing} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg nav-transition"
+                      style={{ background: "hsl(var(--accent))", color: "hsl(var(--muted-foreground))" }}>
+                      <Pencil className="w-3 h-3" /> Edit
+                    </button>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <button onClick={() => setEditing(false)} className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg nav-transition"
+                        style={{ background: "hsl(var(--accent))", color: "hsl(var(--muted-foreground))" }}>
+                        <X className="w-3 h-3" /> Cancel
+                      </button>
+                      <button onClick={handleSaveProfile} disabled={editSaving} className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg nav-transition font-medium"
+                        style={{ background: "hsl(var(--amber))", color: "hsl(222 25% 8%)" }}>
+                        <Save className="w-3 h-3" /> {editSaving ? "Saving…" : "Save"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {editing ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">First Name</Label>
+                        <Input value={editFirst} onChange={(e) => setEditFirst(e.target.value)} className="h-8 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Last Name</Label>
+                        <Input value={editLast} onChange={(e) => setEditLast(e.target.value)} className="h-8 text-sm" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Phone</Label>
+                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="e.g. 07700 900123" className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Role</Label>
+                      <Select value={editRole} onValueChange={setEditRole}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="technician">Technician</SelectItem>
+                          <SelectItem value="office_staff">Office Staff</SelectItem>
+                          <SelectItem value="franchise_manager">Franchise Manager</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {[
+                      ["Full Name", `${emp.first_name} ${emp.last_name}`],
+                      ["Email", emp.email],
+                      ["Phone", emp.phone ?? "—"],
+                      ["Role", emp.role.replace(/_/g, " ")],
+                      ["Staff Type", emp.staff_type ?? "—"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex justify-between text-sm">
+                        <span style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
+                        <span className="font-medium capitalize">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="card-elevated rounded-xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Employment</h3>
-                {[
-                  ["Status", emp.is_active ? "Active" : "Inactive"],
-                  ["Joined", emp.created_at ? new Date(emp.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : "—"],
-                  ["Total Leave Days", emp.leave.filter(l => l.status === "approved").reduce((s, l) => s + l.days, 0).toFixed(1)],
-                  ["Pending Leave", emp.leave.filter(l => l.status === "pending").length],
-                  ["Open Expenses", emp.expenses.filter(e => e.status === "pending").length],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
-                    <span className="font-medium">{value}</span>
+
+              <div className="space-y-4">
+                {/* Employment summary */}
+                <div className="card-elevated rounded-xl p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">Employment</h3>
+                  {[
+                    ["Status", emp.is_active ? "Active" : "Inactive"],
+                    ["Joined", emp.created_at ? new Date(emp.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : "—"],
+                    ["Approved Leave Days", emp.leave.filter(l => l.status === "approved").reduce((s, l) => s + l.days, 0).toFixed(1)],
+                    ["Pending Leave", emp.leave.filter(l => l.status === "pending").length],
+                    ["Open Expenses", emp.expenses.filter(e => e.status === "pending").length],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex justify-between text-sm">
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
+                      <span className="font-medium">{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Login access */}
+                <div className="card-elevated rounded-xl p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">Login Access</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{emp.email}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {emp.is_active ? "Can log in to the portal" : "Access is currently suspended"}
+                      </p>
+                    </div>
+                    <StatusChip value={emp.is_active ? "active" : "inactive"} />
                   </div>
-                ))}
+                  <button
+                    onClick={handleToggleAccess}
+                    disabled={accessSaving}
+                    className="w-full flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg font-medium nav-transition"
+                    style={emp.is_active
+                      ? { background: "hsl(var(--destructive)/0.08)", color: "hsl(var(--destructive))", border: "1px solid hsl(var(--destructive)/0.2)" }
+                      : { background: "hsl(var(--green)/0.1)", color: "hsl(var(--green))", border: "1px solid hsl(var(--green)/0.3)" }
+                    }
+                  >
+                    {emp.is_active
+                      ? <><ShieldOff className="w-4 h-4" /> {accessSaving ? "Suspending…" : "Suspend Access"}</>
+                      : <><ShieldCheck className="w-4 h-4" /> {accessSaving ? "Restoring…" : "Restore Access"}</>
+                    }
+                  </button>
+                </div>
               </div>
             </div>
           )}
