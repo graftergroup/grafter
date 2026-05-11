@@ -66,7 +66,7 @@ const TEAM_MENU_BASE: SidebarItem = {
 };
 
 const TEAM_MENU_HR: SidebarItem = {
-  label: "People",
+  label: "Grafter HR",
   icon: UserCheck,
   submenu: [
     { label: "Employees",      href: "/admin/hr/employees",   icon: Users         },

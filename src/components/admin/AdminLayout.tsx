@@ -25,14 +25,14 @@ const ROUTE_MAP: Record<string, string[]> = {
   "/admin/locations":          ["Locations"],
   "/admin/modules":            ["Modules"],
   "/admin/settings":           ["Settings"],
-  "/admin/hr/employees":       ["People", "Employees"],
-  "/admin/hr/calendar":        ["People", "Calendar"],
-  "/admin/hr/rotas":           ["People", "Rotas & Shifts"],
-  "/admin/hr/documents":       ["People", "Documents"],
-  "/admin/hr/performance":     ["People", "Performance"],
-  "/admin/hr/expenses":        ["People", "Expenses"],
-  "/admin/hr/payroll":         ["People", "Payroll"],
-  "/admin/hr/recruitment":     ["People", "Recruitment"],
+  "/admin/hr/employees":       ["Grafter HR", "Employees"],
+  "/admin/hr/calendar":        ["Grafter HR", "Calendar"],
+  "/admin/hr/rotas":           ["Grafter HR", "Rotas & Shifts"],
+  "/admin/hr/documents":       ["Grafter HR", "Documents"],
+  "/admin/hr/performance":     ["Grafter HR", "Performance"],
+  "/admin/hr/expenses":        ["Grafter HR", "Expenses"],
+  "/admin/hr/payroll":         ["Grafter HR", "Payroll"],
+  "/admin/hr/recruitment":     ["Grafter HR", "Recruitment"],
 };
 
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {
@@ -43,7 +43,7 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
   const crumbs = (() => {
     if (ROUTE_MAP[location.pathname]) return ROUTE_MAP[location.pathname];
     // employee detail e.g. /admin/hr/employees/:id
-    if (location.pathname.startsWith("/admin/hr/employees/")) return ["People", "Employees", title ?? "Employee"];
+    if (location.pathname.startsWith("/admin/hr/employees/")) return ["Grafter HR", "Employees", title ?? "Employee"];
     if (location.pathname.startsWith("/admin/staff/")) return ["Team", "Staff", title ?? "Staff Member"];
     if (location.pathname.startsWith("/admin/invoices/")) return ["Revenue", "Invoice"];
     return title ? [title] : ["Admin"];
