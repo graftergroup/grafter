@@ -1,0 +1,52 @@
+[
+  {
+    "content": "Infrastructure: useActiveModules hook + ModuleGate component + wire provider into App.tsx",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "Backend: HR models (Leave, Shift, Document, Review, Expense, JobPosting) + routes_hr.py + register router",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "Sidebar: HR section with hasModule gate + useTabs labels + App.tsx routes",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "HR Employees page + EmployeeDetail with inner tabs",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "HR Calendar (month-view leave/shifts)",
+    "id": "5",
+    "status": "completed"
+  },
+  {
+    "content": "HR Rotas & Shifts (week-view planner)",
+    "id": "6",
+    "status": "completed"
+  },
+  {
+    "content": "HR Documents page",
+    "id": "7",
+    "status": "in_progress"
+  },
+  {
+    "content": "HR Performance + Expenses pages",
+    "id": "8",
+    "status": "pending"
+  },
+  {
+    "content": "HR Payroll stub + Recruitment page",
+    "id": "9",
+    "status": "pending"
+  },
+  {
+    "content": "TypeScript check + commit",
+    "id": "10",
+    "status": "pending"
+  }
+]

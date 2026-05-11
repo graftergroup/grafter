@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TabProvider } from "@/hooks/useTabs";
+import { ActiveModulesProvider } from "@/hooks/useActiveModules";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { AcceptInvitePage } from "@/pages/AcceptInvitePage";
@@ -23,6 +24,15 @@ import { AdminStaffDetail, SuperadminStaffDetail } from "@/pages/shared/StaffDet
 import { InvoiceDetail } from "@/pages/admin/InvoiceDetail";
 import { ModuleManagement } from "@/pages/superadmin/ModuleManagement";
 import ModuleCatalogue from "@/pages/admin/ModuleCatalogue";
+import HREmployees from "@/pages/admin/hr/HREmployees";
+import HREmployeeDetail from "@/pages/admin/hr/HREmployeeDetail";
+import HRCalendar from "@/pages/admin/hr/HRCalendar";
+import HRRotas from "@/pages/admin/hr/HRRotas";
+import HRDocuments from "@/pages/admin/hr/HRDocuments";
+import HRPerformance from "@/pages/admin/hr/HRPerformance";
+import HRExpenses from "@/pages/admin/hr/HRExpenses";
+import HRPayroll from "@/pages/admin/hr/HRPayroll";
+import HRRecruitment from "@/pages/admin/hr/HRRecruitment";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -62,9 +72,11 @@ function RoleProtectedRoute({
 /* ─── Tab layout wrappers (mount once, persist across child navigations) ── */
 function AdminTabLayout() {
   return (
-    <TabProvider homeRoute="/admin">
-      <Outlet />
-    </TabProvider>
+    <ActiveModulesProvider>
+      <TabProvider homeRoute="/admin">
+        <Outlet />
+      </TabProvider>
+    </ActiveModulesProvider>
   );
 }
 
@@ -117,6 +129,16 @@ function AppRoutes() {
         <Route path="/admin/staff/:id" element={<AdminStaffDetail />} />
         <Route path="/admin/locations" element={<LocationManagement />} />
         <Route path="/admin/modules" element={<ModuleCatalogue />} />
+        {/* HR Module */}
+        <Route path="/admin/hr/employees" element={<HREmployees />} />
+        <Route path="/admin/hr/employees/:id" element={<HREmployeeDetail />} />
+        <Route path="/admin/hr/calendar" element={<HRCalendar />} />
+        <Route path="/admin/hr/rotas" element={<HRRotas />} />
+        <Route path="/admin/hr/documents" element={<HRDocuments />} />
+        <Route path="/admin/hr/performance" element={<HRPerformance />} />
+        <Route path="/admin/hr/expenses" element={<HRExpenses />} />
+        <Route path="/admin/hr/payroll" element={<HRPayroll />} />
+        <Route path="/admin/hr/recruitment" element={<HRRecruitment />} />
       </Route>
 
       {/* Superadmin Routes — TabProvider mounts once here */}

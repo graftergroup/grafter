@@ -403,3 +403,142 @@ class FranchiseModule(Base):
     # Relationships
     franchise = relationship("Franchise", back_populates="franchise_modules")
     module = relationship("Module", back_populates="franchise_modules")
+
+
+# ─── HR Module Models ────────────────────────────────────────────────────────
+
+
+class LeaveRequest(Base):
+    """Employee leave / absence request."""
+
+    __tablename__ = "leave_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    leave_type = Column(String(50), nullable=False, default="annual")  # annual, sick, unpaid, other
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    days = Column(Float, nullable=False, default=1.0)
+    reason = Column(Text, nullable=True)
+    status = Column(String(50), default="pending")  # pending, approved, rejected
+    reviewed_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employee = relationship("User", foreign_keys=[employee_id])
+    reviewed_by = relationship("User", foreign_keys=[reviewed_by_id])
+
+
+class Shift(Base):
+    """An individual scheduled shift for an employee."""
+
+    __tablename__ = "shifts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    shift_date = Column(DateTime, nullable=False)
+    start_time = Column(String(10), nullable=False)  # "09:00"
+    end_time = Column(String(10), nullable=False)    # "17:00"
+    role = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employee = relationship("User", foreign_keys=[employee_id])
+
+
+class EmployeeDocument(Base):
+    """A document record attached to an employee."""
+
+    __tablename__ = "employee_documents"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    doc_type = Column(String(50), nullable=False, default="other")  # contract, id, certificate, other
+    file_url = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    uploaded_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employee = relationship("User", foreign_keys=[employee_id])
+    uploaded_by = relationship("User", foreign_keys=[uploaded_by_id])
+
+
+class PerformanceReview(Base):
+    """An employee performance appraisal / review."""
+
+    __tablename__ = "performance_reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    review_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    period = Column(String(50), nullable=False)       # e.g. "Q1 2026"
+    overall_rating = Column(Integer, nullable=False, default=3)  # 1–5
+    goals = Column(Text, nullable=True)
+    strengths = Column(Text, nullable=True)
+    improvements = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    status = Column(String(50), default="draft")      # draft, completed
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employee = relationship("User", foreign_keys=[employee_id])
+    reviewer = relationship("User", foreign_keys=[reviewer_id])
+
+
+class ExpenseClaim(Base):
+    """An employee expense claim."""
+
+    __tablename__ = "expense_claims"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    description = Column(String(255), nullable=False)
+    amount = Column(Float, nullable=False)
+    category = Column(String(50), nullable=False, default="other")  # travel, equipment, meals, other
+    expense_date = Column(DateTime, nullable=False)
+    receipt_url = Column(Text, nullable=True)
+    status = Column(String(50), default="pending")    # pending, approved, rejected
+    reviewed_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employee = relationship("User", foreign_keys=[employee_id])
+    reviewed_by = relationship("User", foreign_keys=[reviewed_by_id])
+
+
+class JobPosting(Base):
+    """A recruitment job posting."""
+
+    __tablename__ = "job_postings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    location = Column(String(255), nullable=True)
+    employment_type = Column(String(50), nullable=False, default="full_time")  # full_time, part_time, casual
+    salary_min = Column(Float, nullable=True)
+    salary_max = Column(Float, nullable=True)
+    requirements = Column(Text, nullable=True)
+    status = Column(String(50), default="draft")      # draft, open, closed
+    posted_at = Column(DateTime, nullable=True)
+    closes_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

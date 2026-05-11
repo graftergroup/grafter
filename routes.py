@@ -24,6 +24,7 @@ from backend.routes_modules import (
     franchise_router as modules_franchise_router,
     franchise_member_router as modules_member_router,
 )
+from backend.routes_hr import hr_router
 
 
 def create_app(static_dir: str) -> FastAPI:
@@ -70,6 +71,7 @@ def create_app(static_dir: str) -> FastAPI:
     app.include_router(modules_superadmin_router, prefix="/api")
     app.include_router(modules_franchise_router, prefix="/api")
     app.include_router(modules_member_router, prefix="/api")
+    app.include_router(hr_router, prefix="/api")
 
     if os.path.isdir(static_dir):
         assets_dir = os.path.join(static_dir, "assets")

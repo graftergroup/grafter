@@ -17,8 +17,17 @@ import {
   ChevronsRight,
   Wrench,
   Puzzle,
+  UserCheck,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Star,
+  Receipt,
+  Banknote,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveModules } from "@/hooks/useActiveModules";
 
 interface SidebarItem {
   label: string;
@@ -62,10 +71,31 @@ export function Sidebar() {
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const { logout, user } = useAuth();
   const location = useLocation();
+  const { hasModule } = useActiveModules();
 
   const isActive = (href?: string) => href && location.pathname === href;
   const isGroupActive = (item: SidebarItem) =>
     item.submenu?.some((s) => location.pathname === s.href);
+
+  const HR_MENU: SidebarItem = {
+    label: "HR",
+    icon: UserCheck,
+    submenu: [
+      { label: "Employees",    href: "/admin/hr/employees",   icon: Users        },
+      { label: "Calendar",     href: "/admin/hr/calendar",    icon: CalendarDays },
+      { label: "Rotas & Shifts", href: "/admin/hr/rotas",     icon: ClipboardList },
+      { label: "Documents",    href: "/admin/hr/documents",   icon: FileText     },
+      { label: "Performance",  href: "/admin/hr/performance", icon: Star         },
+      { label: "Expenses",     href: "/admin/hr/expenses",    icon: Receipt      },
+      { label: "Payroll",      href: "/admin/hr/payroll",     icon: Banknote     },
+      { label: "Recruitment",  href: "/admin/hr/recruitment", icon: Megaphone    },
+    ],
+  };
+
+  const fullMenu: SidebarItem[] = [
+    ...ADMIN_MENU,
+    ...(hasModule("hr") ? [HR_MENU] : []),
+  ];
 
   return (
     <aside
@@ -111,7 +141,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2">
-        {ADMIN_MENU.map((item) => {
+        {fullMenu.map((item) => {
           const active = isActive(item.href);
           const groupActive = isGroupActive(item);
           const open = expandedMenu === item.label;

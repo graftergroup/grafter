@@ -18,6 +18,15 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/locations":        "Locations",
   "/admin/settings":         "Settings",
   "/admin/modules":          "Modules",
+  // Admin — HR module
+  "/admin/hr/employees":     "Employees",
+  "/admin/hr/calendar":      "HR Calendar",
+  "/admin/hr/rotas":         "Rotas & Shifts",
+  "/admin/hr/documents":     "Documents",
+  "/admin/hr/performance":   "Performance",
+  "/admin/hr/expenses":      "Expenses",
+  "/admin/hr/payroll":       "Payroll",
+  "/admin/hr/recruitment":   "Recruitment",
   // Superadmin
   "/superadmin":             "Overview",
   "/superadmin/franchises":  "Franchises",
