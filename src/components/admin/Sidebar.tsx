@@ -35,7 +35,7 @@ interface SidebarItem {
   submenu?: SidebarItem[];
 }
 
-const ADMIN_MENU: SidebarItem[] = [
+const ADMIN_MENU_BASE: SidebarItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   {
     label: "Revenue",
@@ -46,16 +46,6 @@ const ADMIN_MENU: SidebarItem[] = [
       { label: "Reports",   href: "/admin/revenue-reports", icon: BarChart3  },
     ],
   },
-  {
-    label: "Team",
-    icon: Users,
-    submenu: [
-      { label: "Technicians", href: "/admin/technicians", icon: Wrench    },
-      { label: "Workload",    href: "/admin/workload",    icon: Calendar   },
-      { label: "Staff",       href: "/admin/staff",       icon: Users      },
-      { label: "Performance", href: "/admin/performance", icon: TrendingUp },
-    ],
-  },
   { label: "Customers", href: "/admin/customers", icon: Users    },
   { label: "Bookings",  href: "/admin/bookings",  icon: Calendar },
   { label: "Vehicles",  href: "/admin/vehicles",  icon: Truck    },
@@ -64,18 +54,31 @@ const ADMIN_MENU: SidebarItem[] = [
   { label: "Settings",  href: "/admin/settings",  icon: Settings },
 ];
 
-const HR_MENU: SidebarItem = {
-  label: "HR",
+const TEAM_MENU_BASE: SidebarItem = {
+  label: "Team",
+  icon: Users,
+  submenu: [
+    { label: "Technicians", href: "/admin/technicians", icon: Wrench    },
+    { label: "Workload",    href: "/admin/workload",    icon: Calendar   },
+    { label: "Staff",       href: "/admin/staff",       icon: Users      },
+    { label: "Performance", href: "/admin/performance", icon: TrendingUp },
+  ],
+};
+
+const TEAM_MENU_HR: SidebarItem = {
+  label: "People",
   icon: UserCheck,
   submenu: [
-    { label: "Employees",     href: "/admin/hr/employees",   icon: Users        },
-    { label: "Calendar",      href: "/admin/hr/calendar",    icon: CalendarDays },
-    { label: "Rotas & Shifts",href: "/admin/hr/rotas",       icon: ClipboardList},
-    { label: "Documents",     href: "/admin/hr/documents",   icon: FileText     },
-    { label: "Performance",   href: "/admin/hr/performance", icon: Star         },
-    { label: "Expenses",      href: "/admin/hr/expenses",    icon: Receipt      },
-    { label: "Payroll",       href: "/admin/hr/payroll",     icon: Banknote     },
-    { label: "Recruitment",   href: "/admin/hr/recruitment", icon: Megaphone    },
+    { label: "Employees",      href: "/admin/hr/employees",   icon: Users         },
+    { label: "Technicians",    href: "/admin/technicians",    icon: Wrench        },
+    { label: "Calendar",       href: "/admin/hr/calendar",    icon: CalendarDays  },
+    { label: "Rotas & Shifts", href: "/admin/hr/rotas",       icon: ClipboardList },
+    { label: "Documents",      href: "/admin/hr/documents",   icon: FileText      },
+    { label: "Performance",    href: "/admin/hr/performance", icon: Star          },
+    { label: "Expenses",       href: "/admin/hr/expenses",    icon: Receipt       },
+    { label: "Payroll",        href: "/admin/hr/payroll",     icon: Banknote      },
+    { label: "Recruitment",    href: "/admin/hr/recruitment", icon: Megaphone     },
+    { label: "Staff Accounts", href: "/admin/staff",          icon: Users         },
   ],
 };
 
@@ -89,9 +92,14 @@ export function Sidebar() {
   const isGroupActive = (item: SidebarItem) =>
     !!item.submenu?.some((s) => location.pathname.startsWith(s.href ?? "__"));
 
+  const hrActive = hasModule("hr");
+  const teamMenu = hrActive ? TEAM_MENU_HR : TEAM_MENU_BASE;
+
   const fullMenu: SidebarItem[] = [
-    ...ADMIN_MENU,
-    ...(hasModule("hr") ? [HR_MENU] : []),
+    ADMIN_MENU_BASE[0],       // Dashboard
+    ADMIN_MENU_BASE[1],       // Revenue
+    teamMenu,                 // Team (basic) or People (HR)
+    ...ADMIN_MENU_BASE.slice(2), // Customers, Bookings, Vehicles, Locations, Modules, Settings
   ];
 
   // Auto-expand the active group on first render
