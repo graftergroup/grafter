@@ -45,6 +45,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
+/** Sends users to the right home based on their role */
+function RoleHome() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (!isAuthenticated || !user) return <Navigate to="/login" />;
+  if (user.role === "super_admin") return <Navigate to="/superadmin" replace />;
+  if (user.role === "admin" || user.role === "franchise_manager") return <Navigate to="/admin" replace />;
+  return <Navigate to="/pending-approval" replace />;
+}
+
 function RoleProtectedRoute({
   children,
   allowedRoles,
@@ -63,7 +73,7 @@ function RoleProtectedRoute({
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/login" />;
   }
 
   return children;
@@ -89,22 +99,15 @@ function SuperadminTabLayout() {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <RegisterPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/pending-approval" element={<PendingApprovalPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Smart redirect — sends each role to its correct home */}
+      <Route path="/dashboard" element={<RoleHome />} />
+      <Route path="/" element={<RoleHome />} />
 
       {/* Admin/Franchisee Routes — TabProvider mounts once here */}
       <Route
