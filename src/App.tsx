@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TabProvider } from "@/hooks/useTabs";
 import { ActiveModulesProvider } from "@/hooks/useActiveModules";
+import { PermissionsProvider } from "@/hooks/usePermissions";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { AcceptInvitePage } from "@/pages/AcceptInvitePage";
@@ -113,7 +114,9 @@ function AppRoutes() {
       <Route
         element={
           <RoleProtectedRoute allowedRoles={["admin", "franchise_manager"]}>
-            <AdminTabLayout />
+            <PermissionsProvider>
+              <AdminTabLayout />
+            </PermissionsProvider>
           </RoleProtectedRoute>
         }
       >

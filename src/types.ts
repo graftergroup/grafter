@@ -3,6 +3,22 @@ import type { UUID } from "crypto";
 export type ApiStatus = "checking" | "connected" | "error";
 export type UserRole = "super_admin" | "admin" | "franchise_manager" | "technician" | "office_staff" | "customer";
 
+export type PermissionAction = "view" | "create" | "update" | "delete";
+
+export const PERMISSION_SLUGS = [
+  "dashboard", "revenue", "customers", "bookings",
+  "vehicles", "locations", "modules", "settings", "team", "hr",
+] as const;
+export type PermissionSlug = typeof PERMISSION_SLUGS[number];
+
+export interface PermissionEntry {
+  permission_slug: string;
+  can_view: boolean;
+  can_create: boolean;
+  can_update: boolean;
+  can_delete: boolean;
+}
+
 export interface HealthResponse {
   ok: boolean;
   version: string;

@@ -27,36 +27,40 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveModules } from "@/hooks/useActiveModules";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SidebarItem {
   label: string;
   href?: string;
   icon: React.ElementType;
   submenu?: SidebarItem[];
+  permissionSlug?: string;
 }
 
 const ADMIN_MENU_BASE: SidebarItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, permissionSlug: "dashboard" },
   {
     label: "Revenue",
     icon: DollarSign,
+    permissionSlug: "revenue",
     submenu: [
       { label: "Invoices",  href: "/admin/invoices",        icon: DollarSign },
       { label: "Payments",  href: "/admin/payments",        icon: DollarSign },
       { label: "Reports",   href: "/admin/revenue-reports", icon: BarChart3  },
     ],
   },
-  { label: "Customers", href: "/admin/customers", icon: Users    },
-  { label: "Bookings",  href: "/admin/bookings",  icon: Calendar },
-  { label: "Vehicles",  href: "/admin/vehicles",  icon: Truck    },
-  { label: "Locations", href: "/admin/locations", icon: MapPin   },
-  { label: "Modules",   href: "/admin/modules",   icon: Puzzle   },
-  { label: "Settings",  href: "/admin/settings",  icon: Settings },
+  { label: "Customers", href: "/admin/customers", icon: Users,    permissionSlug: "customers" },
+  { label: "Bookings",  href: "/admin/bookings",  icon: Calendar, permissionSlug: "bookings"  },
+  { label: "Vehicles",  href: "/admin/vehicles",  icon: Truck,    permissionSlug: "vehicles"  },
+  { label: "Locations", href: "/admin/locations", icon: MapPin,   permissionSlug: "locations" },
+  { label: "Modules",   href: "/admin/modules",   icon: Puzzle,   permissionSlug: "modules"   },
+  { label: "Settings",  href: "/admin/settings",  icon: Settings, permissionSlug: "settings"  },
 ];
 
 const TEAM_MENU_BASE: SidebarItem = {
   label: "Team",
   icon: Users,
+  permissionSlug: "team",
   submenu: [
     { label: "Technicians", href: "/admin/technicians", icon: Wrench    },
     { label: "Workload",    href: "/admin/workload",    icon: Calendar   },
@@ -68,6 +72,7 @@ const TEAM_MENU_BASE: SidebarItem = {
 const TEAM_MENU_HR: SidebarItem = {
   label: "Grafter HR",
   icon: UserCheck,
+  permissionSlug: "hr",
   submenu: [
     { label: "Employees",      href: "/admin/hr/employees",   icon: Users         },
     { label: "Technicians",    href: "/admin/technicians",    icon: Wrench        },
@@ -86,6 +91,7 @@ export function Sidebar() {
   const { logout, user } = useAuth();
   const location = useLocation();
   const { hasModule } = useActiveModules();
+  const { hasPermission } = usePermissions();
 
   const isActive = (href?: string) => !!href && location.pathname === href;
   const isGroupActive = (item: SidebarItem) =>
@@ -99,7 +105,7 @@ export function Sidebar() {
     ADMIN_MENU_BASE[1],       // Revenue
     teamMenu,                 // Team (basic) or People (HR)
     ...ADMIN_MENU_BASE.slice(2), // Customers, Bookings, Vehicles, Locations, Modules, Settings
-  ];
+  ].filter((item) => !item.permissionSlug || hasPermission(item.permissionSlug, "view"));
 
   // Auto-expand the active group on first render
   const activeGroup = fullMenu.find((item) => item.submenu && isGroupActive(item));

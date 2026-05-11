@@ -9,6 +9,9 @@ import type { ColDef } from "@/components/DataTable";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import type { PermissionEntry } from "@/types";
+import { PERMISSION_SLUGS } from "@/types";
 import {
   User,
   Mail,
@@ -19,6 +22,7 @@ import {
   ToggleRight,
   Trash2,
   ShieldCheck,
+  ShieldAlert,
   ClipboardList,
 } from "lucide-react";
 
@@ -86,6 +90,13 @@ function StaffDetailInner({ isSuperadmin }: { isSuperadmin: boolean }) {
   const [editStaffType, setEditStaffType] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const { user: authUser } = useAuth();
+  const canManagePermissions = !isSuperadmin &&
+    (authUser?.role === "franchise_manager" || authUser?.role === "admin");
+
+  const [perms, setPerms] = useState<PermissionEntry[]>([]);
+  const [permsSaving, setPermsSaving] = useState<string | null>(null);
+
   const token = () => localStorage.getItem("access_token");
 
   const fetchStaff = useCallback(async () => {
@@ -124,6 +135,26 @@ function StaffDetailInner({ isSuperadmin }: { isSuperadmin: boolean }) {
 
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
   useEffect(() => { if (activeTab === "jobs") fetchJobs(); }, [activeTab, fetchJobs]);
+  useEffect(() => { if (activeTab === "settings" && canManagePermissions) fetchPerms(); }, [activeTab, canManagePermissions]); // eslint-disable-line
+
+  const fetchPerms = async () => {
+    if (!id) return;
+    const res = await fetch(`/api/staff/${id}/permissions`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (res.ok) setPerms(await res.json());
+  };
+
+  const updatePerm = async (updated: PermissionEntry) => {
+    if (!id) return;
+    setPermsSaving(updated.permission_slug);
+    const merged = perms.map((p) => p.permission_slug === updated.permission_slug ? updated : p);
+    setPerms(merged);
+    await fetch(`/api/staff/${id}/permissions`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ permissions: merged }),
+    });
+    setPermsSaving(null);
+  };
 
   const handleSave = async () => {
     if (!id) return;
@@ -418,6 +449,63 @@ function StaffDetailInner({ isSuperadmin }: { isSuperadmin: boolean }) {
               <Trash2 className="w-4 h-4" /> Delete Staff Member
             </button>
           </div>
+
+          {/* Permissions editor — admin-only, not for managers/superadmin */}
+          {canManagePermissions && staff.role !== "franchise_manager" && staff.role !== "admin" && (
+            <div className="card-elevated rounded-xl p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4" style={{ color: "hsl(var(--amber))" }} />
+                <h3 className="text-sm font-semibold text-foreground">Access Permissions</h3>
+              </div>
+              <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Override this staff member's default access. All actions default to <strong>on</strong>.
+              </p>
+              <div className="space-y-2">
+                {PERMISSION_SLUGS.map((slug) => {
+                  const perm = perms.find((p) => p.permission_slug === slug);
+                  const saving2 = permsSaving === slug;
+                  const viewOn = perm?.can_view ?? false;
+                  const LABELS: Record<string, string> = {
+                    dashboard: "Dashboard", revenue: "Revenue", customers: "Customers",
+                    bookings: "Bookings", vehicles: "Vehicles", locations: "Locations",
+                    modules: "Modules", settings: "Settings", team: "Team", hr: "Grafter HR",
+                  };
+                  const toggle = (field: "can_view" | "can_create" | "can_update" | "can_delete", val: boolean) => {
+                    const base = perm ?? { permission_slug: slug, can_view: false, can_create: true, can_update: true, can_delete: true };
+                    const updated: PermissionEntry = { ...base, [field]: val };
+                    if (field === "can_view" && !val) {
+                      updated.can_create = false; updated.can_update = false; updated.can_delete = false;
+                    }
+                    updatePerm(updated);
+                  };
+                  return (
+                    <div key={slug} className="rounded-lg p-3 space-y-2"
+                      style={{ background: "hsl(var(--accent))", opacity: saving2 ? 0.7 : 1, transition: "opacity 0.2s" }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">{LABELS[slug] ?? slug}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>View</span>
+                          <Switch checked={viewOn} onCheckedChange={(v) => toggle("can_view", v)} disabled={saving2} />
+                        </div>
+                      </div>
+                      {viewOn && (
+                        <div className="flex items-center gap-4 pt-1" style={{ borderTop: "1px solid hsl(var(--border))" }}>
+                          {(["can_create", "can_update", "can_delete"] as const).map((field) => (
+                            <label key={field} className="flex items-center gap-1.5 cursor-pointer select-none">
+                              <Switch checked={perm?.[field] ?? true} onCheckedChange={(v) => toggle(field, v)} disabled={saving2} />
+                              <span className="text-xs capitalize" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                {field.replace("can_", "")}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

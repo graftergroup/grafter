@@ -140,6 +140,29 @@ class User(Base):
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     jobs_assigned = relationship("Job", back_populates="assigned_technician")
     invited_by = relationship("User", remote_side="User.id", foreign_keys=[invited_by_id])
+    permissions = relationship("UserPermission", foreign_keys="UserPermission.user_id", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserPermission(Base):
+    """Per-user permission overrides for portal areas."""
+
+    __tablename__ = "user_permissions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id", ondelete="CASCADE"), nullable=False)
+    permission_slug = Column(String(50), nullable=False)
+    can_view = Column(Boolean, default=True, nullable=False)
+    can_create = Column(Boolean, default=True, nullable=False)
+    can_update = Column(Boolean, default=True, nullable=False)
+    can_delete = Column(Boolean, default=True, nullable=False)
+    granted_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="permissions")
+    granted_by = relationship("User", foreign_keys=[granted_by_id])
 
 
 class APIKey(Base):

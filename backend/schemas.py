@@ -415,6 +415,23 @@ class InviteAcceptRequest(BaseModel):
     password: str
 
 
+class PermissionEntry(BaseModel):
+    """Single permission slug with CRUD action flags."""
+    permission_slug: str
+    can_view: bool = True
+    can_create: bool = True
+    can_update: bool = True
+    can_delete: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class PermissionUpdate(BaseModel):
+    """Bulk permission update request for a staff member."""
+    permissions: list[PermissionEntry]
+
+
 class StaffUpdate(BaseModel):
     """Staff user update request."""
 
@@ -435,6 +452,7 @@ class StaffResponse(UserBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    permissions: list[PermissionEntry] = []
 
     class Config:
         from_attributes = True

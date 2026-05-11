@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.auth import hash_password
-from backend.dependencies import get_auth_user, get_superadmin_user, get_franchisee_manager
-from backend.models import User, UserRole, Franchise
-from backend.schemas import StaffCreate, StaffUpdate, StaffResponse, StaffInviteRequest, InviteTokenResponse
+from backend.dependencies import get_auth_user, get_superadmin_user, get_franchisee_manager, get_effective_permissions
+from backend.models import User, UserRole, Franchise, UserPermission
+from backend.schemas import StaffCreate, StaffUpdate, StaffResponse, StaffInviteRequest, InviteTokenResponse, PermissionEntry, PermissionUpdate
 
 router = APIRouter(prefix="/staff", tags=["staff"])
 
@@ -283,3 +283,79 @@ async def invite_staff(
         email=invite_data.email,
         expires_at=expires_at,
     )
+
+
+# ─── Permissions endpoints ─────────────────────────────────────────────────
+
+
+@router.get("/me/permissions", response_model=list[PermissionEntry])
+async def get_my_permissions(
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Return the calling user's effective permissions (role defaults + overrides)."""
+    return get_effective_permissions(user, db)
+
+
+@router.get("/{user_id}/permissions", response_model=list[PermissionEntry])
+async def get_staff_permissions(
+    user_id: str,
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Return effective permissions for a specific staff member."""
+    staff = db.query(User).filter(User.id == user_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff user not found")
+    if user.role != UserRole.SUPER_ADMIN and user.franchise_id != staff.franchise_id:
+        raise HTTPException(status_code=403, detail="Cannot access staff from another franchise")
+    return get_effective_permissions(staff, db)
+
+
+@router.put("/{user_id}/permissions", response_model=list[PermissionEntry])
+async def update_staff_permissions(
+    user_id: str,
+    data: PermissionUpdate,
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Bulk-upsert permission overrides for a staff member.
+    Only franchise managers, admins, and superadmins can do this.
+    """
+    if user.role not in [UserRole.SUPER_ADMIN, UserRole.FRANCHISE_MANAGER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not authorised to manage permissions")
+
+    staff = db.query(User).filter(User.id == user_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff user not found")
+    if user.role != UserRole.SUPER_ADMIN and user.franchise_id != staff.franchise_id:
+        raise HTTPException(status_code=403, detail="Cannot manage staff from another franchise")
+
+    for entry in data.permissions:
+        existing = db.query(UserPermission).filter(
+            UserPermission.user_id == staff.id,
+            UserPermission.permission_slug == entry.permission_slug,
+        ).first()
+        if existing:
+            existing.can_view   = entry.can_view
+            existing.can_create = entry.can_create
+            existing.can_update = entry.can_update
+            existing.can_delete = entry.can_delete
+            existing.updated_at = datetime.utcnow()
+        else:
+            new_perm = UserPermission(
+                user_id=staff.id,
+                franchise_id=staff.franchise_id,
+                permission_slug=entry.permission_slug,
+                can_view=entry.can_view,
+                can_create=entry.can_create,
+                can_update=entry.can_update,
+                can_delete=entry.can_delete,
+                granted_by_id=user.id,
+            )
+            db.add(new_perm)
+
+    db.commit()
+    return get_effective_permissions(staff, db)
+

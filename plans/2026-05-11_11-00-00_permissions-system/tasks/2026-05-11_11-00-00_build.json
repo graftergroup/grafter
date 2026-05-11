@@ -1,0 +1,32 @@
+[
+  {
+    "content": "[db] Run migrate_permissions.py — CREATE TABLE user_permissions",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "[backend] models.py UserPermission + schemas PermissionEntry/Update + StaffResponse update",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "[backend] dependencies.py ROLE_DEFAULTS + get_effective_permissions()",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "[backend] routes_staff.py GET + PUT /staff/:id/permissions",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "[frontend] types.ts + usePermissions hook + App.tsx PermissionsProvider wrap",
+    "id": "5",
+    "status": "in_progress"
+  },
+  {
+    "content": "[frontend] Sidebar permissionSlug filtering + HREmployeeDetail + StaffManagement permissions editor UI",
+    "id": "6",
+    "status": "pending"
+  }
+]
