@@ -5,9 +5,8 @@ interface ActiveModule {
   id: string;
   module_id: string;
   module_name: string;
-  slug: string;
+  module_slug: string;
   status: "active" | "pending" | "inactive" | "rejected";
-  monthly_price: number;
   effective_price: number;
 }
 
@@ -54,7 +53,7 @@ export function ActiveModulesProvider({ children }: { children: React.ReactNode 
   }, [fetch_modules]);
 
   const hasModule = useCallback(
-    (slug: string) => modules.some((m) => m.slug === slug && m.status === "active"),
+    (slug: string) => modules.some((m) => m.module_slug === slug && m.status === "active"),
     [modules]
   );
 

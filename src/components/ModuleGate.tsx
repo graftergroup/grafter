@@ -25,7 +25,7 @@ export function ModuleGate({ slug, moduleName, children }: ModuleGateProps) {
   }
 
   // Find module metadata for the upsell card
-  const mod = modules.find((m) => m.slug === slug);
+  const mod = modules.find((m) => m.module_slug === slug);
   const displayName = moduleName ?? mod?.module_name ?? slug;
   const isPending = mod?.status === "pending";
 
