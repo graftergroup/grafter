@@ -95,7 +95,7 @@ export function TeamManagement() {
       render: (t) => <StatusChip value={t.total_jobs > 0 ? "active" : "inactive"} />,
     },
     {
-      key: "technician_id",
+      key: "actions" as keyof PerfRow,
       label: "",
       align: "right",
       render: () => (
