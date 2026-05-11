@@ -1,4 +1,4 @@
-"""Platform settings API routes (superadmin only)."""
+"""Platform settings API routes (superadmin only) + franchise self-service settings."""
 
 import smtplib
 import ssl
@@ -10,10 +10,90 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
-from backend.dependencies import get_superadmin_user
-from backend.models import User, PlatformSetting
+from backend.dependencies import get_superadmin_user, get_auth_user
+from backend.models import User, PlatformSetting, Franchise, UserRole
 
 router = APIRouter(prefix="/superadmin/settings", tags=["superadmin-settings"])
+franchise_settings_router = APIRouter(prefix="/franchise", tags=["franchise-settings"])
+
+# ─── Franchise self-service ───────────────────────────────────────────────────
+
+class FranchiseSelfResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+class FranchiseSelfUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+
+@franchise_settings_router.get("/me", response_model=FranchiseSelfResponse)
+async def get_my_franchise(
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Franchise manager reads their own franchise profile."""
+    franchise = db.query(Franchise).filter(Franchise.id == user.franchise_id).first()
+    if not franchise:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+    return FranchiseSelfResponse(
+        id=str(franchise.id),
+        name=franchise.name,
+        email=franchise.email,
+        phone=franchise.phone,
+        address=franchise.address,
+        city=franchise.city,
+        state=franchise.state,
+        postal_code=franchise.postal_code,
+        country=franchise.country,
+        is_active=franchise.is_active,
+    )
+
+@franchise_settings_router.put("/me", response_model=FranchiseSelfResponse)
+async def update_my_franchise(
+    data: FranchiseSelfUpdate,
+    user: User = Depends(get_auth_user),
+    db: Session = Depends(get_db),
+):
+    """Franchise manager updates their own franchise profile."""
+    if user.role not in [UserRole.FRANCHISE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+        raise HTTPException(status_code=403, detail="Not authorised")
+    franchise = db.query(Franchise).filter(Franchise.id == user.franchise_id).first()
+    if not franchise:
+        raise HTTPException(status_code=404, detail="Franchise not found")
+    for field, val in data.model_dump(exclude_none=True).items():
+        setattr(franchise, field, val)
+    franchise.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(franchise)
+    return FranchiseSelfResponse(
+        id=str(franchise.id),
+        name=franchise.name,
+        email=franchise.email,
+        phone=franchise.phone,
+        address=franchise.address,
+        city=franchise.city,
+        state=franchise.state,
+        postal_code=franchise.postal_code,
+        country=franchise.country,
+        is_active=franchise.is_active,
+    )
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
 

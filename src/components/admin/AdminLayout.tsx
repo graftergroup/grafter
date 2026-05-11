@@ -23,7 +23,7 @@ const ROUTE_MAP: Record<string, string[]> = {
   "/admin/bookings":           ["Bookings"],
   "/admin/vehicles":           ["Vehicles"],
   "/admin/locations":          ["Locations"],
-  "/admin/modules":            ["Modules"],
+  "/admin/modules":            ["Settings", "Modules"],
   "/admin/settings":           ["Settings"],
   "/admin/hr/employees":       ["Grafter HR", "Employees"],
   "/admin/hr/calendar":        ["Grafter HR", "Calendar"],

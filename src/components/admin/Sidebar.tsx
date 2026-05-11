@@ -14,7 +14,6 @@ import {
   MapPin,
   LogOut,
   Wrench,
-  Puzzle,
   UserCheck,
   CalendarDays,
   ClipboardList,
@@ -53,7 +52,6 @@ const ADMIN_MENU_BASE: SidebarItem[] = [
   { label: "Bookings",  href: "/admin/bookings",  icon: Calendar, permissionSlug: "bookings"  },
   { label: "Vehicles",  href: "/admin/vehicles",  icon: Truck,    permissionSlug: "vehicles"  },
   { label: "Locations", href: "/admin/locations", icon: MapPin,   permissionSlug: "locations" },
-  { label: "Modules",   href: "/admin/modules",   icon: Puzzle,   permissionSlug: "modules"   },
   { label: "Settings",  href: "/admin/settings",  icon: Settings, permissionSlug: "settings"  },
 ];
 

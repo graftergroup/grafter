@@ -26,6 +26,7 @@ import { InvoiceDetail } from "@/pages/admin/InvoiceDetail";
 import { ModuleManagement } from "@/pages/superadmin/ModuleManagement";
 import { SuperadminSettings } from "@/pages/superadmin/SuperadminSettings";
 import ModuleCatalogue from "@/pages/admin/ModuleCatalogue";
+import AdminSettings from "@/pages/admin/AdminSettings";
 import HREmployees from "@/pages/admin/hr/HREmployees";
 import HREmployeeDetail from "@/pages/admin/hr/HREmployeeDetail";
 import HRCalendar from "@/pages/admin/hr/HRCalendar";
@@ -135,7 +136,8 @@ function AppRoutes() {
         <Route path="/admin/staff" element={<StaffManagement />} />
         <Route path="/admin/staff/:id" element={<AdminStaffDetail />} />
         <Route path="/admin/locations" element={<LocationManagement />} />
-        <Route path="/admin/modules" element={<ModuleCatalogue />} />
+        <Route path="/admin/modules" element={<Navigate to="/admin/settings?tab=modules" replace />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
         {/* HR Module */}
         <Route path="/admin/hr/employees" element={<HREmployees />} />
         <Route path="/admin/hr/employees/:id" element={<HREmployeeDetail />} />
