@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     Float,
     DateTime,
+    Date,
     Boolean,
     ForeignKey,
     Text,
@@ -536,7 +537,7 @@ class EmployeeDocument(Base):
     file_url = Column(Text, nullable=True)
     file_name = Column(Text, nullable=True)
     file_size = Column(Integer, nullable=True)  # bytes
-    expiry_date = Column(DateTime, nullable=True)
+    expiry_date = Column(Date, nullable=True)
     notes = Column(Text, nullable=True)
     uploaded_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

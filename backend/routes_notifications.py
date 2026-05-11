@@ -48,7 +48,8 @@ class Notification:
 
 def _collect_document_expiry(db: Session, franchise_id, now: datetime) -> list[Notification]:
     """Documents expiring within 90 days or already expired."""
-    cutoff = now + timedelta(days=90)
+    from datetime import date as date_type
+    cutoff = (now + timedelta(days=90)).date()
     docs = (
         db.query(EmployeeDocument)
         .filter(
@@ -59,9 +60,11 @@ def _collect_document_expiry(db: Session, franchise_id, now: datetime) -> list[N
         .order_by(EmployeeDocument.expiry_date.asc())
         .all()
     )
+    today = now.date()
     result = []
     for d in docs:
-        delta = (d.expiry_date.date() - now.date()).days
+        expiry_d = d.expiry_date if isinstance(d.expiry_date, date_type) and not isinstance(d.expiry_date, datetime) else d.expiry_date.date()
+        delta = (expiry_d - today).days
         if delta < 0:
             severity = "critical"
             detail = f"Expired {abs(delta)}d ago"
@@ -85,7 +88,7 @@ def _collect_document_expiry(db: Session, franchise_id, now: datetime) -> list[N
             subtitle=f"{emp_name} · {detail}",
             action_label="View employee",
             action_url=f"/admin/hr/employees/{d.employee_id}",
-            timestamp=d.expiry_date.isoformat(),
+            timestamp=expiry_d.isoformat(),
         ))
     return result
 

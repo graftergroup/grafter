@@ -327,11 +327,14 @@ class DocumentCreate(BaseModel):
 
 
 def _doc_dict(d: EmployeeDocument) -> dict:
-    # Days until expiry
+    # Days until expiry — handle both date and datetime objects
     days_until_expiry = None
     expiry_status = None
     if d.expiry_date:
-        delta = (d.expiry_date.date() - datetime.utcnow().date()).days
+        from datetime import date as date_type
+        expiry_d = d.expiry_date if isinstance(d.expiry_date, date_type) and not isinstance(d.expiry_date, datetime) else d.expiry_date.date()
+        today = datetime.utcnow().date()
+        delta = (expiry_d - today).days
         days_until_expiry = delta
         if delta < 0:
             expiry_status = "expired"
@@ -351,7 +354,7 @@ def _doc_dict(d: EmployeeDocument) -> dict:
         "file_url": d.file_url,
         "file_name": d.file_name,
         "file_size": d.file_size,
-        "expiry_date": d.expiry_date.isoformat()[:10] if d.expiry_date else None,
+        "expiry_date": d.expiry_date.isoformat() if d.expiry_date else None,
         "days_until_expiry": days_until_expiry,
         "expiry_status": expiry_status,
         "notes": d.notes,
@@ -384,7 +387,7 @@ async def create_document(
     expiry = None
     if data.expiry_date:
         try:
-            expiry = datetime.strptime(data.expiry_date, "%Y-%m-%d")
+            expiry = datetime.strptime(data.expiry_date, "%Y-%m-%d").date()
         except ValueError:
             pass
 
@@ -434,7 +437,8 @@ async def upload_document(
     expiry = None
     if expiry_date:
         try:
-            expiry = datetime.strptime(expiry_date, "%Y-%m-%d")
+            from datetime import date as date_type
+            expiry = datetime.strptime(expiry_date, "%Y-%m-%d").date()
         except ValueError:
             pass
 
@@ -473,7 +477,8 @@ async def expiring_documents(
     db: Session = Depends(get_db),
 ):
     """Return documents expiring within `days` days (including already expired)."""
-    cutoff = datetime.utcnow() + timedelta(days=days)
+    from datetime import date as date_type
+    cutoff = (datetime.utcnow() + timedelta(days=days)).date()
     docs = (
         db.query(EmployeeDocument)
         .filter(
