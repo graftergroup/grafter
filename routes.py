@@ -26,6 +26,7 @@ from backend.routes_modules import (
 )
 from backend.routes_hr import hr_router
 from backend.routes_settings import router as settings_router, franchise_settings_router
+from backend.routes_notifications import notifications_router
 
 
 def create_app(static_dir: str) -> FastAPI:
@@ -75,6 +76,7 @@ def create_app(static_dir: str) -> FastAPI:
     app.include_router(hr_router, prefix="/api")
     app.include_router(settings_router, prefix="/api")
     app.include_router(franchise_settings_router, prefix="/api")
+    app.include_router(notifications_router, prefix="/api")
 
     if os.path.isdir(static_dir):
         assets_dir = os.path.join(static_dir, "assets")

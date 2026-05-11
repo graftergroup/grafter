@@ -1,0 +1,17 @@
+[
+  {
+    "content": "Create backend/routes_notifications.py with unified /api/notifications endpoint",
+    "id": "notif-1",
+    "status": "completed"
+  },
+  {
+    "content": "Wire notifications router into routes.py",
+    "id": "notif-2",
+    "status": "completed"
+  },
+  {
+    "content": "Extract NotificationBell component + replace AdminLayout bell",
+    "id": "notif-3",
+    "status": "in_progress"
+  }
+]
