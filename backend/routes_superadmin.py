@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.dependencies import get_superadmin_user
-from backend.models import User, Franchise, UserRole, Booking, Invoice, Payment, Job, FranchiseBillingRecord
+from backend.models import User, Franchise, UserRole, Booking, Invoice, Payment, Job, FranchiseBillingRecord, FranchiseModule, Module
 from backend.schemas import (
     FranchiseCreateRequest,
     FranchiseUpdateRequest,
@@ -369,6 +369,18 @@ async def generate_billing_records(
         rate = franchise.commission_rate or 0.10
         commission = round(float(gross) * rate, 2)
 
+        # Sum active module fees for this franchise
+        active_fms = db.query(FranchiseModule).filter(
+            FranchiseModule.franchise_id == franchise.id,
+            FranchiseModule.status == "active",
+        ).all()
+        module_fees = 0.0
+        for fm in active_fms:
+            mod = db.query(Module).filter(Module.id == fm.module_id).first()
+            if mod:
+                module_fees += fm.custom_price if fm.custom_price is not None else mod.monthly_price
+        module_fees = round(module_fees, 2)
+
         rec = FranchiseBillingRecord(
             franchise_id=franchise.id,
             period_start=body.period_start,
@@ -376,6 +388,7 @@ async def generate_billing_records(
             gross_revenue=float(gross),
             commission_rate=rate,
             commission_amount=commission,
+            module_fees=module_fees,
             status="pending",
         )
         db.add(rec)

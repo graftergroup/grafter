@@ -17,11 +17,13 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/vehicles":         "Vehicles",
   "/admin/locations":        "Locations",
   "/admin/settings":         "Settings",
+  "/admin/modules":          "Modules",
   // Superadmin
   "/superadmin":             "Overview",
   "/superadmin/franchises":  "Franchises",
   "/superadmin/staff":       "All Staff",
   "/superadmin/billing":     "Billing",
+  "/superadmin/modules":     "Modules",
 };
 
 /* ─── Types ────────────────────────────────────────────────────── */

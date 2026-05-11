@@ -506,6 +506,7 @@ class BillingRecordResponse(BaseModel):
     gross_revenue: float
     commission_rate: float
     commission_amount: float
+    module_fees: float = 0.0
     status: str
     notes: Optional[str] = None
     created_at: datetime
@@ -534,3 +535,76 @@ class UpdateCommissionRequest(BaseModel):
 
     commission_rate: float
     billing_email: Optional[str] = None
+
+
+# ==================== Modules ====================
+
+
+class ModuleCreate(BaseModel):
+    """Create a new platform module."""
+
+    name: str
+    slug: str
+    description: Optional[str] = None
+    monthly_price: float = 0.0
+    is_available: bool = True
+
+
+class ModuleUpdate(BaseModel):
+    """Update an existing module."""
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    monthly_price: Optional[float] = None
+    is_available: Optional[bool] = None
+
+
+class ModuleResponse(BaseModel):
+    """Module response (superadmin view)."""
+
+    id: UUID
+    name: str
+    slug: str
+    description: Optional[str] = None
+    monthly_price: float
+    is_available: bool
+    active_franchise_count: int = 0
+    pending_request_count: int = 0
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class FranchiseModuleResponse(BaseModel):
+    """A franchise's subscription to a module."""
+
+    id: UUID
+    franchise_id: UUID
+    franchise_name: Optional[str] = None
+    module_id: UUID
+    module_name: str
+    module_description: Optional[str] = None
+    module_slug: str
+    status: str  # active, pending, rejected, inactive
+    custom_price: Optional[float] = None
+    effective_price: float           # custom_price ?? module.monthly_price
+    requested_at: Optional[datetime] = None
+    activated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FranchiseModuleApproval(BaseModel):
+    """Superadmin approves or rejects a module request."""
+
+    status: str          # active or rejected
+    custom_price: Optional[float] = None
+
+
+class FranchiseModuleToggle(BaseModel):
+    """Superadmin directly toggles/sets a module for a franchise."""
+
+    status: str          # active or inactive
+    custom_price: Optional[float] = None

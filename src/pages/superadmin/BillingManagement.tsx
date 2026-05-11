@@ -38,6 +38,7 @@ interface BillingRecord {
   gross_revenue: number;
   commission_rate: number;
   commission_amount: number;
+  module_fees: number;
   status: string;
   notes: string | null;
   created_at: string;
@@ -199,6 +200,20 @@ export function BillingManagement() {
       render: (r) => (
         <span className="text-sm tabular-nums font-semibold" style={{ color: "hsl(var(--amber))" }}>
           {fmt(r.commission_amount)}
+        </span>
+      ),
+    },
+    {
+      key: "module_fees",
+      label: "Module Fees",
+      sortable: true,
+      align: "right",
+      render: (r) => (
+        <span
+          className="text-sm tabular-nums font-medium"
+          style={{ color: r.module_fees > 0 ? "hsl(var(--blue))" : "hsl(var(--muted-foreground))" }}
+        >
+          {fmt(r.module_fees ?? 0)}
         </span>
       ),
     },

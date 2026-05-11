@@ -21,6 +21,8 @@ import { BillingManagement } from "@/pages/superadmin/BillingManagement";
 import { FranchiseDetail } from "@/pages/superadmin/FranchiseDetail";
 import { AdminStaffDetail, SuperadminStaffDetail } from "@/pages/shared/StaffDetail";
 import { InvoiceDetail } from "@/pages/admin/InvoiceDetail";
+import { ModuleManagement } from "@/pages/superadmin/ModuleManagement";
+import ModuleCatalogue from "@/pages/admin/ModuleCatalogue";
 import type { UserRole } from "@/types";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -114,6 +116,7 @@ function AppRoutes() {
         <Route path="/admin/staff" element={<StaffManagement />} />
         <Route path="/admin/staff/:id" element={<AdminStaffDetail />} />
         <Route path="/admin/locations" element={<LocationManagement />} />
+        <Route path="/admin/modules" element={<ModuleCatalogue />} />
       </Route>
 
       {/* Superadmin Routes — TabProvider mounts once here */}
@@ -130,6 +133,7 @@ function AppRoutes() {
         <Route path="/superadmin/staff" element={<AllStaff />} />
         <Route path="/superadmin/staff/:id" element={<SuperadminStaffDetail />} />
         <Route path="/superadmin/billing" element={<BillingManagement />} />
+        <Route path="/superadmin/modules" element={<ModuleManagement />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" />} />

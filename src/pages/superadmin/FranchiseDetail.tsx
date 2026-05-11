@@ -33,6 +33,9 @@ import {
   CheckCircle,
   XCircle,
   Trash2,
+  Puzzle,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -82,12 +85,27 @@ interface BillingRecord {
 }
 
 /* ─── Inner tab types ────────────────────────────────────────────── */
-type InnerTab = "overview" | "staff" | "billing" | "settings";
+type InnerTab = "overview" | "staff" | "billing" | "modules" | "settings";
+
+/* ─── FranchiseModule entry (from GET /api/superadmin/franchises/:id/modules) */
+interface FranchiseModuleEntry {
+  id: string;
+  module_id: string;
+  module_name: string;
+  module_description?: string;
+  status: "active" | "pending" | "inactive" | "rejected";
+  custom_price: number | null;
+  effective_price: number;
+  monthly_price: number;
+  requested_at?: string;
+  activated_at?: string;
+}
 
 const INNER_TABS: { id: InnerTab; label: string; icon: React.ReactNode }[] = [
   { id: "overview",  label: "Overview",  icon: <TrendingUp className="w-3.5 h-3.5" /> },
   { id: "staff",     label: "Staff",     icon: <Users className="w-3.5 h-3.5" /> },
   { id: "billing",   label: "Billing",   icon: <DollarSign className="w-3.5 h-3.5" /> },
+  { id: "modules",   label: "Modules",   icon: <Puzzle className="w-3.5 h-3.5" /> },
   { id: "settings",  label: "Settings",  icon: <Settings className="w-3.5 h-3.5" /> },
 ];
 
@@ -142,6 +160,13 @@ export function FranchiseDetail() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<InnerTab>("overview");
+
+  // Module state
+  const [fmList, setFmList] = useState<FranchiseModuleEntry[]>([]);
+  const [fmLoading, setFmLoading] = useState(false);
+  const [fmTogglingId, setFmTogglingId] = useState<string | null>(null);
+  const [fmCustomPrices, setFmCustomPrices] = useState<Record<string, string>>({});
+  const [fmSavingPriceId, setFmSavingPriceId] = useState<string | null>(null);
 
   // Settings form state
   const [editName, setEditName] = useState("");
@@ -228,6 +253,28 @@ export function FranchiseDetail() {
     }
   }, [id]);
 
+  const fetchModules = useCallback(async () => {
+    if (!id) return;
+    setFmLoading(true);
+    try {
+      const res = await fetch(`/api/superadmin/franchises/${id}/modules`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (res.ok) {
+        const data: FranchiseModuleEntry[] = await res.json();
+        setFmList(data);
+        // Seed custom price inputs from current values
+        const prices: Record<string, string> = {};
+        data.forEach((fm) => {
+          prices[fm.module_id] = fm.custom_price != null ? String(fm.custom_price) : "";
+        });
+        setFmCustomPrices(prices);
+      }
+    } finally {
+      setFmLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchFranchise();
     fetchStats();
@@ -236,7 +283,8 @@ export function FranchiseDetail() {
   useEffect(() => {
     if (activeTab === "staff") fetchStaff();
     if (activeTab === "billing") fetchBilling();
-  }, [activeTab, fetchStaff, fetchBilling]);
+    if (activeTab === "modules") fetchModules();
+  }, [activeTab, fetchStaff, fetchBilling, fetchModules]);
 
   const handleSaveSettings = async () => {
     if (!id) return;
@@ -342,6 +390,72 @@ export function FranchiseDetail() {
     setInviteRole("technician");
     setInviteLink(null);
     setInviteCopied(false);
+  };
+
+  /* ── Module actions ────────────────────────────────────────────── */
+  const handleModuleToggle = async (fm: FranchiseModuleEntry) => {
+    if (!id) return;
+    const newStatus = fm.status === "active" ? "inactive" : "active";
+    setFmTogglingId(fm.module_id);
+    try {
+      const res = await fetch(`/api/superadmin/franchises/${id}/modules/${fm.module_id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) fetchModules();
+    } finally {
+      setFmTogglingId(null);
+    }
+  };
+
+  const handleModuleApprove = async (fm: FranchiseModuleEntry, customPrice?: number) => {
+    if (!id) return;
+    setFmTogglingId(fm.module_id);
+    try {
+      const body: Record<string, unknown> = { status: "active" };
+      if (customPrice != null && !isNaN(customPrice)) body.custom_price = customPrice;
+      const res = await fetch(`/api/superadmin/franchises/${id}/modules/${fm.module_id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) fetchModules();
+    } finally {
+      setFmTogglingId(null);
+    }
+  };
+
+  const handleModuleReject = async (fm: FranchiseModuleEntry) => {
+    if (!id) return;
+    setFmTogglingId(fm.module_id);
+    try {
+      const res = await fetch(`/api/superadmin/franchises/${id}/modules/${fm.module_id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      if (res.ok) fetchModules();
+    } finally {
+      setFmTogglingId(null);
+    }
+  };
+
+  const handleSaveCustomPrice = async (fm: FranchiseModuleEntry) => {
+    if (!id) return;
+    const raw = fmCustomPrices[fm.module_id];
+    const price = raw === "" ? null : parseFloat(raw);
+    setFmSavingPriceId(fm.module_id);
+    try {
+      await fetch(`/api/superadmin/franchises/${id}/modules/${fm.module_id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ custom_price: price }),
+      });
+      fetchModules();
+    } finally {
+      setFmSavingPriceId(null);
+    }
   };
 
   /* ── Staff columns ─────────────────────────────────────────────── */
@@ -695,6 +809,206 @@ export function FranchiseDetail() {
               loading={billingLoading}
               emptyText="No billing records yet."
             />
+          </div>
+        )}
+
+        {/* ── Modules tab ──────────────────────────────────────────── */}
+        {activeTab === "modules" && (
+          <div className="space-y-4">
+            <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Manage active feature modules and pricing for this franchise.
+            </p>
+
+            {fmLoading ? (
+              <div className="space-y-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="skeleton h-20 rounded-xl" />
+                ))}
+              </div>
+            ) : fmList.length === 0 ? (
+              <div
+                className="rounded-xl p-8 text-center"
+                style={{ border: "1px dashed hsl(var(--border))" }}
+              >
+                <Puzzle className="w-8 h-8 mx-auto mb-3" style={{ color: "hsl(var(--muted-foreground))" }} />
+                <p className="text-sm font-medium text-foreground">No modules available</p>
+                <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Create modules in the Modules section first.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {fmList.map((fm) => {
+                  const isToggling = fmTogglingId === fm.module_id;
+                  const isPending = fm.status === "pending";
+                  const isActive = fm.status === "active";
+                  const customPriceVal = fmCustomPrices[fm.module_id] ?? "";
+                  const isDirtyPrice = customPriceVal !== (fm.custom_price != null ? String(fm.custom_price) : "");
+
+                  const statusColor =
+                    isActive ? "var(--green)"
+                    : isPending ? "var(--amber)"
+                    : fm.status === "rejected" ? "var(--red)"
+                    : "var(--muted-foreground)";
+
+                  const statusLabel =
+                    isActive ? "Active"
+                    : isPending ? "Pending Approval"
+                    : fm.status === "rejected" ? "Rejected"
+                    : "Inactive";
+
+                  return (
+                    <div
+                      key={fm.module_id}
+                      className="card-elevated rounded-xl p-5"
+                      style={{
+                        borderColor: isPending ? "hsl(var(--amber) / 0.3)" : undefined,
+                        background: isPending ? "hsl(var(--amber) / 0.03)" : undefined,
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Icon orb */}
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: `hsl(${statusColor} / 0.1)`,
+                            border: `1px solid hsl(${statusColor} / 0.25)`,
+                            color: `hsl(${statusColor})`,
+                          }}
+                        >
+                          <Puzzle className="w-4 h-4" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm text-foreground">{fm.module_name}</p>
+                            {/* Status chip */}
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={{
+                                background: `hsl(${statusColor} / 0.1)`,
+                                color: `hsl(${statusColor})`,
+                                border: `1px solid hsl(${statusColor} / 0.25)`,
+                              }}
+                            >
+                              {statusLabel}
+                            </span>
+                          </div>
+                          {fm.module_description && (
+                            <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+                              {fm.module_description}
+                            </p>
+                          )}
+
+                          {/* Price row */}
+                          <div className="mt-3 flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                              <span>Default price:</span>
+                              <span className="font-mono font-semibold text-foreground">
+                                £{fm.monthly_price.toFixed(2)}/mo
+                              </span>
+                            </div>
+                            {/* Custom price input */}
+                            <div className="flex items-center gap-2">
+                              <div className="relative">
+                                <span
+                                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                                  style={{ color: "hsl(var(--muted-foreground))" }}
+                                >£</span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder={String(fm.monthly_price)}
+                                  value={customPriceVal}
+                                  onChange={(e) =>
+                                    setFmCustomPrices((prev) => ({
+                                      ...prev,
+                                      [fm.module_id]: e.target.value,
+                                    }))
+                                  }
+                                  className="h-7 text-xs pl-5 w-28 font-mono"
+                                />
+                              </div>
+                              {isDirtyPrice && (
+                                <button
+                                  onClick={() => handleSaveCustomPrice(fm)}
+                                  disabled={fmSavingPriceId === fm.module_id}
+                                  className="text-xs px-2 py-1 rounded-md font-medium nav-transition"
+                                  style={{
+                                    background: "hsl(var(--amber) / 0.12)",
+                                    color: "hsl(var(--amber))",
+                                    border: "1px solid hsl(var(--amber) / 0.3)",
+                                  }}
+                                >
+                                  {fmSavingPriceId === fm.module_id ? "Saving…" : "Save price"}
+                                </button>
+                              )}
+                              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                custom price/mo
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Pending request actions */}
+                          {isPending && (
+                            <div className="mt-3 flex items-center gap-2">
+                              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                Requested {fm.requested_at ? new Date(fm.requested_at).toLocaleDateString() : "—"}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const price = customPriceVal ? parseFloat(customPriceVal) : undefined;
+                                  handleModuleApprove(fm, price);
+                                }}
+                                disabled={isToggling}
+                                className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium nav-transition"
+                                style={{
+                                  background: "hsl(var(--green) / 0.12)",
+                                  color: "hsl(var(--green))",
+                                  border: "1px solid hsl(var(--green) / 0.3)",
+                                }}
+                              >
+                                <CheckCircle className="w-3 h-3" />
+                                {isToggling ? "…" : "Approve"}
+                              </button>
+                              <button
+                                onClick={() => handleModuleReject(fm)}
+                                disabled={isToggling}
+                                className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium nav-transition"
+                                style={{
+                                  background: "hsl(var(--red) / 0.08)",
+                                  color: "hsl(var(--red))",
+                                  border: "1px solid hsl(var(--red) / 0.2)",
+                                }}
+                              >
+                                <XCircle className="w-3 h-3" />
+                                {isToggling ? "…" : "Reject"}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Toggle switch (non-pending only) */}
+                        {!isPending && (
+                          <button
+                            onClick={() => handleModuleToggle(fm)}
+                            disabled={isToggling}
+                            title={isActive ? "Deactivate module" : "Activate module"}
+                            className="flex-shrink-0 nav-transition"
+                            style={{ color: isActive ? "hsl(var(--green))" : "hsl(var(--muted-foreground))", opacity: isToggling ? 0.5 : 1 }}
+                          >
+                            {isActive
+                              ? <ToggleRight className="w-8 h-8" />
+                              : <ToggleLeft className="w-8 h-8" />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

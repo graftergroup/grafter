@@ -16,6 +16,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Wrench,
+  Puzzle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -52,6 +53,7 @@ const ADMIN_MENU: SidebarItem[] = [
   { label: "Bookings",  href: "/admin/bookings",  icon: Calendar  },
   { label: "Vehicles",  href: "/admin/vehicles",  icon: Truck     },
   { label: "Locations", href: "/admin/locations", icon: MapPin    },
+  { label: "Modules",   href: "/admin/modules",   icon: Puzzle    },
   { label: "Settings",  href: "/admin/settings",  icon: Settings  },
 ];
 

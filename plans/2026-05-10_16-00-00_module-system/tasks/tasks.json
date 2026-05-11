@@ -1,0 +1,47 @@
+[
+  {
+    "content": "Backend: Add Module + FranchiseModule models, module_fees to BillingRecord",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "Backend: Add schemas for modules",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "Backend: Create routes_modules.py (superadmin CRUD + franchise request/approve)",
+    "id": "3",
+    "status": "completed"
+  },
+  {
+    "content": "Backend: Update billing generation to sum module_fees, register router",
+    "id": "4",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: SuperadminSidebar + Modules nav + App.tsx route + useTabs label",
+    "id": "5",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: FranchiseDetail Modules inner tab",
+    "id": "6",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Admin sidebar + ModuleCatalogue page",
+    "id": "7",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: App.tsx admin route + useTabs admin label + BillingManagement module_fees column",
+    "id": "8",
+    "status": "completed"
+  },
+  {
+    "content": "Type-check, start server, verify, commit",
+    "id": "9",
+    "status": "in_progress"
+  }
+]

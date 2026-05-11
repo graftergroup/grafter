@@ -106,6 +106,9 @@ class Franchise(Base):
     locations = relationship(
         "FranchiseLocation", back_populates="franchise", cascade="all, delete-orphan"
     )
+    franchise_modules = relationship(
+        "FranchiseModule", back_populates="franchise", cascade="all, delete-orphan"
+    )
 
 
 class User(Base):
@@ -331,6 +334,7 @@ class FranchiseBillingRecord(Base):
     gross_revenue = Column(Float, nullable=False, default=0.0)
     commission_rate = Column(Float, nullable=False)
     commission_amount = Column(Float, nullable=False)
+    module_fees = Column(Float, nullable=False, default=0.0)
     status = Column(String(50), default="pending")  # pending, invoiced, paid
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -361,3 +365,41 @@ class FranchiseLocation(Base):
 
     # Relationships
     franchise = relationship("Franchise", back_populates="locations")
+
+
+class Module(Base):
+    """A platform feature module that can be enabled per franchise."""
+
+    __tablename__ = "modules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(255), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    monthly_price = Column(Float, nullable=False, default=0.0)
+    is_available = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    franchise_modules = relationship("FranchiseModule", back_populates="module", cascade="all, delete-orphan")
+
+
+class FranchiseModule(Base):
+    """Tracks which modules are active/requested for each franchise."""
+
+    __tablename__ = "franchise_modules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    franchise_id = Column(UUID(as_uuid=True), ForeignKey("franchises.id"), nullable=False)
+    module_id = Column(UUID(as_uuid=True), ForeignKey("modules.id"), nullable=False)
+    status = Column(String(50), default="inactive")  # active, pending, rejected, inactive
+    custom_price = Column(Float, nullable=True)       # overrides module.monthly_price if set
+    requested_at = Column(DateTime, nullable=True)
+    activated_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    franchise = relationship("Franchise", back_populates="franchise_modules")
+    module = relationship("Module", back_populates="franchise_modules")
